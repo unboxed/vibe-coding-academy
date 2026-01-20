@@ -6,15 +6,7 @@ import { Footer } from "@/components/layout/footer"
 import { TooltipProvider } from "@/components/ui/tooltip"
 
 function LayoutContent({ children }: { children: React.ReactNode }) {
-  const { profile, signOut, isLoading } = useAuth()
-
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    )
-  }
+  const { profile, signOut } = useAuth()
 
   return (
     <div className="flex min-h-screen flex-col">
