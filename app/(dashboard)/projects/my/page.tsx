@@ -1,216 +1,271 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import * as React from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useAuth } from "@/components/providers/auth-provider"
+import { Plus, Pencil, Trash2, ExternalLink, Loader2 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
+import { useAuth } from "@/components/providers/auth-provider"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import type { Project } from "@/types/database"
+import { Card, CardContent, CardFooter } from "@/components/ui/card"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import type { Project, ProjectStatus } from "@/types/database"
+import { PROJECT_STATUS_LABELS } from "@/types/database"
 
-export default function MyProjectPage() {
+const statusColors: Record<ProjectStatus, string> = {
+  draft: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
+  in_progress: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
+  completed: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
+}
+
+export default function MyProjectsPage() {
   const { user, isLoading: authLoading } = useAuth()
   const router = useRouter()
-  const supabase = createClient()
 
-  const [project, setProject] = useState<Project | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [isSaving, setIsSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
+  const [projects, setProjects] = React.useState<Project[]>([])
+  const [isLoading, setIsLoading] = React.useState(true)
+  const [deleteProject, setDeleteProject] = React.useState<Project | null>(null)
+  const [isDeleting, setIsDeleting] = React.useState(false)
 
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    goal: "",
-    links: "",
-  })
-
-  useEffect(() => {
-    const fetchProject = async () => {
+  // Fetch user's projects
+  React.useEffect(() => {
+    const fetchProjects = async () => {
       if (!user) return
 
+      const supabase = createClient()
       const { data } = await supabase
         .from("projects")
         .select("*")
         .eq("user_id", user.id)
-        .single()
+        .order("created_at", { ascending: false })
 
       if (data) {
-        setProject(data)
-        setFormData({
-          title: data.title || "",
-          description: data.description || "",
-          goal: data.goal || "",
-          links: data.links || "",
-        })
+        setProjects(data as Project[])
       }
       setIsLoading(false)
     }
 
     if (user) {
-      fetchProject()
+      fetchProjects()
     } else if (!authLoading) {
       setIsLoading(false)
     }
   }, [user, authLoading])
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!user) return
+  // Redirect if not authenticated
+  React.useEffect(() => {
+    if (!authLoading && !user) {
+      router.push("/login?redirectTo=/projects/my")
+    }
+  }, [user, authLoading, router])
 
-    setIsSaving(true)
-    setError(null)
-    setSuccess(false)
+  const handleDelete = async () => {
+    if (!deleteProject) return
 
+    setIsDeleting(true)
     try {
-      if (project) {
-        // Update existing project
-        const { error } = await supabase
-          .from("projects")
-          .update({
-            title: formData.title,
-            description: formData.description || null,
-            goal: formData.goal || null,
-            links: formData.links || null,
-          })
-          .eq("id", project.id)
+      const supabase = createClient()
+      const { error } = await supabase
+        .from("projects")
+        .delete()
+        .eq("id", deleteProject.id)
 
-        if (error) throw error
-      } else {
-        // Create new project
-        const { data, error } = await supabase
-          .from("projects")
-          .insert({
-            user_id: user.id,
-            title: formData.title,
-            description: formData.description || null,
-            goal: formData.goal || null,
-            links: formData.links || null,
-          })
-          .select()
-          .single()
+      if (error) throw error
 
-        if (error) throw error
-        setProject(data)
-      }
-
-      setSuccess(true)
-      setTimeout(() => setSuccess(false), 3000)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save project")
+      setProjects((prev) => prev.filter((p) => p.id !== deleteProject.id))
+      setDeleteProject(null)
+    } catch (error) {
+      console.error("Failed to delete project:", error)
     } finally {
-      setIsSaving(false)
+      setIsDeleting(false)
     }
   }
 
   if (authLoading || isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-center py-12">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-        </div>
+      <div className="container mx-auto flex items-center justify-center px-4 py-16">
+        <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     )
   }
 
   if (!user) {
-    router.push("/login?redirectTo=/projects/my")
     return null
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-2xl">
-      <Card>
-        <CardHeader>
-          <CardTitle>{project ? "Edit Your Project" : "Create Your Project"}</CardTitle>
-          <CardDescription>
-            Tell us about what you're building during the programme
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {error && (
-              <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">
-                {error}
+    <div className="container mx-auto px-4 py-8">
+      {/* Header */}
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">My Projects</h1>
+          <p className="mt-2 text-muted-foreground">
+            Manage your project portfolio
+          </p>
+        </div>
+        <Link href="/projects/new">
+          <Button className="gap-2">
+            <Plus className="h-4 w-4" />
+            New Project
+          </Button>
+        </Link>
+      </div>
+
+      {/* Projects grid */}
+      {projects.length > 0 ? (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {projects.map((project) => (
+            <Card key={project.id} className="overflow-hidden">
+              {/* Image */}
+              <div className="relative aspect-video bg-gradient-to-br from-muted to-muted/50">
+                {project.screenshots?.[0]?.url || project.avatar_url ? (
+                  <img
+                    src={project.screenshots?.[0]?.url || project.avatar_url || ""}
+                    alt={project.title}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center">
+                    <Avatar className="h-16 w-16">
+                      <AvatarFallback className="text-2xl">
+                        {project.title[0]?.toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  </div>
+                )}
+                <div className="absolute right-2 top-2">
+                  <Badge className={statusColors[project.status]}>
+                    {PROJECT_STATUS_LABELS[project.status]}
+                  </Badge>
+                </div>
               </div>
-            )}
 
-            {success && (
-              <div className="p-3 text-sm text-green-600 bg-green-50 rounded-md">
-                Project saved successfully!
-              </div>
-            )}
+              {/* Content */}
+              <CardContent className="p-4">
+                <Link
+                  href={`/projects/${project.id}`}
+                  className="text-lg font-semibold hover:text-primary"
+                >
+                  {project.title}
+                </Link>
+                {project.goal && (
+                  <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+                    {project.goal}
+                  </p>
+                )}
+                {project.tech_stack && project.tech_stack.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-1">
+                    {project.tech_stack.slice(0, 3).map((tech) => (
+                      <Badge
+                        key={tech}
+                        variant="outline"
+                        className="text-xs font-normal"
+                      >
+                        {tech}
+                      </Badge>
+                    ))}
+                    {project.tech_stack.length > 3 && (
+                      <Badge variant="outline" className="text-xs font-normal">
+                        +{project.tech_stack.length - 3}
+                      </Badge>
+                    )}
+                  </div>
+                )}
+              </CardContent>
 
-            <div className="space-y-2">
-              <Label htmlFor="title">Project Title *</Label>
-              <Input
-                id="title"
-                value={formData.title}
-                onChange={(e) =>
-                  setFormData({ ...formData, title: e.target.value })
-                }
-                placeholder="My Awesome App"
-                required
-              />
+              {/* Actions */}
+              <CardFooter className="gap-2 border-t p-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 gap-2"
+                  asChild
+                >
+                  <Link href={`/projects/${project.id}`}>
+                    <ExternalLink className="h-4 w-4" />
+                    View
+                  </Link>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 gap-2"
+                  asChild
+                >
+                  <Link href={`/projects/${project.id}/edit`}>
+                    <Pencil className="h-4 w-4" />
+                    Edit
+                  </Link>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2 text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                  onClick={() => setDeleteProject(project)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <Card>
+          <CardContent className="flex flex-col items-center py-12 text-center">
+            <div className="mb-4 rounded-full bg-muted p-4">
+              <Plus className="h-8 w-8 text-muted-foreground" />
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="goal">Goal</Label>
-              <Input
-                id="goal"
-                value={formData.goal}
-                onChange={(e) =>
-                  setFormData({ ...formData, goal: e.target.value })
-                }
-                placeholder="What problem are you solving?"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
-                placeholder="Tell us more about your project..."
-                rows={4}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="links">Project Link</Label>
-              <Input
-                id="links"
-                type="url"
-                value={formData.links}
-                onChange={(e) =>
-                  setFormData({ ...formData, links: e.target.value })
-                }
-                placeholder="https://..."
-              />
-            </div>
-
-            <div className="flex justify-end gap-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => router.push("/projects")}
-              >
-                Cancel
+            <h2 className="mb-2 text-xl font-semibold">No projects yet</h2>
+            <p className="mb-6 text-muted-foreground">
+              Create your first project to showcase your work
+            </p>
+            <Link href="/projects/new">
+              <Button className="gap-2">
+                <Plus className="h-4 w-4" />
+                Create Project
               </Button>
-              <Button type="submit" disabled={isSaving}>
-                {isSaving ? "Saving..." : project ? "Update Project" : "Create Project"}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+            </Link>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Delete confirmation dialog */}
+      <Dialog
+        open={deleteProject !== null}
+        onOpenChange={(open) => !open && setDeleteProject(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Project</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete &quot;{deleteProject?.title}&quot;?
+              This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteProject(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

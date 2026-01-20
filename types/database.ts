@@ -31,13 +31,28 @@ export interface Week {
   updated_at: string
 }
 
+export type ProjectStatus = "draft" | "in_progress" | "completed"
+
+export interface ProjectScreenshot {
+  url: string
+  caption?: string
+  order: number
+  uploaded_at: string
+}
+
 export interface Project {
   id: string
   user_id: string
   title: string
   description: string | null
   goal: string | null
-  links: string | null
+  links: string | null // Keep for backwards compatibility
+  avatar_url: string | null
+  screenshots: ProjectScreenshot[]
+  demo_url: string | null
+  github_url: string | null
+  tech_stack: string[]
+  status: ProjectStatus
   created_at: string
   updated_at: string
   // Joined data
@@ -149,4 +164,51 @@ export interface Database {
       }
     }
   }
+}
+
+// Common tech stack options for autocomplete
+export const COMMON_TECH_STACKS = [
+  "React",
+  "Next.js",
+  "Vue",
+  "Angular",
+  "Svelte",
+  "Node.js",
+  "Express",
+  "NestJS",
+  "Fastify",
+  "Python",
+  "Django",
+  "Flask",
+  "FastAPI",
+  "TypeScript",
+  "JavaScript",
+  "Go",
+  "Rust",
+  "PostgreSQL",
+  "MySQL",
+  "MongoDB",
+  "Redis",
+  "Supabase",
+  "Firebase",
+  "Tailwind CSS",
+  "CSS",
+  "Sass",
+  "Styled Components",
+  "GraphQL",
+  "REST API",
+  "tRPC",
+  "Docker",
+  "Kubernetes",
+  "AWS",
+  "Vercel",
+  "OpenAI",
+  "LangChain",
+  "AI/ML",
+] as const
+
+export const PROJECT_STATUS_LABELS: Record<ProjectStatus, string> = {
+  draft: "Draft",
+  in_progress: "In Progress",
+  completed: "Completed",
 }
