@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+    --radius: 0.5rem;
+
+    /* Level colors - distinct accents for each level */
+    --level-1: 199 89% 48%; /* Blue - Foundation */
+    --level-2: 262 83% 58%; /* Purple - Intermediate */
+    --level-3: 142 76% 36%; /* Green - Advanced */
+
+    /* Week colors - gradient within levels */
+    --week-1: 199 89% 48%;
+    --week-2: 199 89% 55%;
+    --week-3: 199 89% 62%;
+    --week-4: 262 83% 58%;
+    --week-5: 262 83% 65%;
+    --week-6: 142 76% 36%;
+    --week-7: 142 76% 43%;
+    --week-8: 142 76% 50%;
+    --week-9: 142 76% 57%;
+    --week-10: 142 76% 64%;
+
+    /* Badge colors */
+    --badge-gold: 45 93% 47%;
+    --badge-silver: 210 14% 66%;
+    --badge-bronze: 30 67% 49%;
+    --badge-blue: 210 100% 50%;
+    --badge-green: 142 76% 36%;
+    --badge-purple: 262 83% 58%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+}
+
+/* Typography - Clean, minimal inspired by Unboxed */
+@layer base {
+  h1 {
+    @apply text-4xl font-bold tracking-tight md:text-5xl;
+  }
+  h2 {
+    @apply text-3xl font-semibold tracking-tight md:text-4xl;
+  }
+  h3 {
+    @apply text-2xl font-semibold tracking-tight md:text-3xl;
+  }
+  h4 {
+    @apply text-xl font-semibold tracking-tight;
+  }
+}
+
+/* Custom utilities */
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
