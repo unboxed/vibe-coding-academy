@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Search, Menu } from "lucide-react"
+import { Search, Menu, Loader2, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -16,9 +16,17 @@ import {
 import { cn, getInitials } from "@/lib/utils"
 import type { Profile } from "@/types/database"
 
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+
 interface NavbarProps {
   user: Profile | null
   onSignOut: () => void
+  isLoading?: boolean
+  authError?: string | null
 }
 
 const navLinks = [
@@ -29,7 +37,7 @@ const navLinks = [
   { href: "/badges", label: "Badges" },
 ]
 
-export function Navbar({ user, onSignOut }: NavbarProps) {
+export function Navbar({ user, onSignOut, isLoading, authError }: NavbarProps) {
   const pathname = usePathname()
   const isAdmin = user?.role === "admin" || user?.role === "facilitator"
 
@@ -82,7 +90,23 @@ export function Navbar({ user, onSignOut }: NavbarProps) {
             </Button>
           </Link>
 
-          {user ? (
+          {isLoading ? (
+            <Button variant="ghost" size="icon" className="h-9 w-9" disabled>
+              <Loader2 className="h-4 w-4 animate-spin" />
+            </Button>
+          ) : authError ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-9 w-9 text-destructive" onClick={() => window.location.reload()}>
+                  <AlertCircle className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="max-w-xs text-sm">{authError}</p>
+                <p className="text-xs text-muted-foreground mt-1">Click to refresh</p>
+              </TooltipContent>
+            </Tooltip>
+          ) : user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -111,7 +135,7 @@ export function Navbar({ user, onSignOut }: NavbarProps) {
                   <Link href="/profile">Profile</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/projects/my">My Project</Link>
+                  <Link href="/projects/my">My Projects</Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={onSignOut}>Sign out</DropdownMenuItem>

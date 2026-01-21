@@ -106,12 +106,7 @@ export default function EditProjectPage() {
     loadProject()
   }, [user, projectId, router])
 
-  // Redirect if not authenticated
-  React.useEffect(() => {
-    if (!user && !isLoading) {
-      router.push(`/login?redirectTo=/projects/${projectId}/edit`)
-    }
-  }, [user, isLoading, projectId, router])
+  // Note: Auth redirect handled by middleware - no need for client-side redirect
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

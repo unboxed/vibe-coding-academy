@@ -61,12 +61,7 @@ export default function NewProjectPage() {
     screenshots: [],
   })
 
-  // Redirect if not authenticated (only after loading completes)
-  React.useEffect(() => {
-    if (!isLoading && !user) {
-      router.push("/login?redirectTo=/projects/new")
-    }
-  }, [user, isLoading, router])
+  // Note: Auth redirect handled by middleware - no need for client-side redirect
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

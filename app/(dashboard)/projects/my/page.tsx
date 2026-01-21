@@ -61,12 +61,7 @@ export default function MyProjectsPage() {
     }
   }, [user, authLoading])
 
-  // Redirect if not authenticated
-  React.useEffect(() => {
-    if (!authLoading && !user) {
-      router.push("/login?redirectTo=/projects/my")
-    }
-  }, [user, authLoading, router])
+  // Note: Auth redirect handled by middleware - no need for client-side redirect
 
   const handleDelete = async () => {
     if (!deleteProject) return

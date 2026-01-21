@@ -13,13 +13,18 @@ export const revalidate = 60
 async function getProjects() {
   const supabase = await createClient()
 
-  const { data: projects } = await supabase
+  const { data: projects, error } = await supabase
     .from("projects")
     .select(`
       *,
       profile:profiles(id, name, avatar_url)
     `)
     .order("created_at", { ascending: false })
+
+  if (error) {
+    console.error("Error fetching projects:", error)
+    return []
+  }
 
   return (projects || []) as Project[]
 }
