@@ -77,6 +77,7 @@ export default function AdminBadgesPage() {
         badge_id: selectedBadge,
         user_id: selectedUser,
         awarded_by: user.id,
+        demo_id: null,
       })
 
       if (error) throw error
