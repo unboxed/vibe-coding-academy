@@ -189,7 +189,7 @@ export default function SearchPage() {
       {query && !isSearching && totalResults === 0 && (
         <Card>
           <CardContent className="py-12 text-center">
-            <p className="text-muted-foreground">No results found for "{query}"</p>
+            <p className="text-muted-foreground">No results found for &quot;{query}&quot;</p>
           </CardContent>
         </Card>
       )}
