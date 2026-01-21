@@ -73,6 +73,7 @@ export default function AdminBadgesPage() {
     setAwardError(null)
 
     try {
+      // @ts-expect-error - Supabase types not inferring correctly for badge_awards insert
       const { error } = await supabase.from("badge_awards").insert({
         badge_id: selectedBadge,
         user_id: selectedUser,

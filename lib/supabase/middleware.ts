@@ -1,5 +1,7 @@
-import { createServerClient } from "@supabase/ssr"
+import { createServerClient, type CookieOptions } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
+
+type CookieToSet = { name: string; value: string; options?: CookieOptions }
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -14,7 +16,7 @@ export async function updateSession(request: NextRequest) {
         getAll() {
           return request.cookies.getAll()
         },
-        setAll(cookiesToSet) {
+        setAll(cookiesToSet: CookieToSet[]) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           )
@@ -54,11 +56,13 @@ export async function updateSession(request: NextRequest) {
 
   // Admin routes require admin or facilitator role
   if (request.nextUrl.pathname.startsWith("/admin") && user) {
-    const { data: profile } = await supabase
+    const { data: profileData } = await supabase
       .from("profiles")
       .select("role")
       .eq("id", user.id)
       .single()
+
+    const profile = profileData as { role: string } | null
 
     if (!profile || !["admin", "facilitator"].includes(profile.role)) {
       const url = request.nextUrl.clone()

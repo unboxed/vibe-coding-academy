@@ -60,6 +60,7 @@ export default function AdminUsersPage() {
     try {
       const { error } = await supabase
         .from("profiles")
+        // @ts-expect-error - Supabase types not correctly inferring Update type
         .update({ role: newRole })
         .eq("id", userId)
 

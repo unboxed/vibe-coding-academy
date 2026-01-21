@@ -49,16 +49,17 @@ export default function EditWeekPage({ params }: Props) {
         .single()
 
       if (data) {
-        setWeek(data)
+        const weekData = data as Week
+        setWeek(weekData)
         setFormData({
-          title: data.title || "",
-          overview: data.overview || "",
-          prework: data.prework || "",
-          session_plan: data.session_plan || "",
-          prompts: data.prompts || "",
-          resources: data.resources || "",
-          feedback_url: data.feedback_url || "",
-          published: data.published,
+          title: weekData.title || "",
+          overview: weekData.overview || "",
+          prework: weekData.prework || "",
+          session_plan: weekData.session_plan || "",
+          prompts: weekData.prompts || "",
+          resources: weekData.resources || "",
+          feedback_url: weekData.feedback_url || "",
+          published: weekData.published,
         })
       }
       setIsLoading(false)
@@ -78,6 +79,7 @@ export default function EditWeekPage({ params }: Props) {
     try {
       const { error } = await supabase
         .from("weeks")
+        // @ts-expect-error - Supabase types not correctly inferring Update type
         .update({
           title: formData.title,
           overview: formData.overview || null,

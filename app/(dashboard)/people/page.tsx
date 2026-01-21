@@ -5,20 +5,25 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { getInitials } from "@/lib/utils"
 import { Github, MessageSquare } from "lucide-react"
+import type { Profile } from "@/types/database"
 
 export const revalidate = 60
 
 export default async function PeoplePage() {
   const supabase = await createClient()
 
-  const { data: profiles } = await supabase
+  const { data: profilesData } = await supabase
     .from("profiles")
     .select("*")
     .order("name")
 
-  const { data: badgeCounts } = await supabase
+  const profiles = profilesData as Profile[] | null
+
+  const { data: badgeCountsData } = await supabase
     .from("badge_awards")
     .select("user_id")
+
+  const badgeCounts = badgeCountsData as { user_id: string }[] | null
 
   // Count badges per user
   const badgeCountMap = new Map<string, number>()

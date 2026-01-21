@@ -82,6 +82,7 @@ export default function NewProjectPage() {
         title: formData.title,
       })
 
+      // @ts-expect-error - Supabase types not correctly inferring Insert type
       const { data, error: insertError } = await supabase.from("projects").insert({
         id: projectId,
         user_id: user.id,

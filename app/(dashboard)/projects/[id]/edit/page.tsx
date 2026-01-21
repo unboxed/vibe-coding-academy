@@ -71,11 +71,13 @@ export default function EditProjectPage() {
       if (!user) return
 
       const supabase = createClient()
-      const { data, error } = await supabase
+      const { data: projectData, error } = await supabase
         .from("projects")
         .select("*")
         .eq("id", projectId)
         .single()
+
+      const data = projectData as Project | null
 
       if (error || !data) {
         router.push("/projects")
@@ -88,14 +90,14 @@ export default function EditProjectPage() {
         return
       }
 
-      setProject(data as Project)
+      setProject(data)
       setFormData({
         title: data.title,
         goal: data.goal || "",
         description: data.description || "",
         demo_url: data.demo_url || "",
         github_url: data.github_url || "",
-        status: (data.status as ProjectStatus) || "draft",
+        status: data.status || "draft",
         tech_stack: data.tech_stack || [],
         avatar_url: data.avatar_url,
         screenshots: data.screenshots || [],
@@ -120,6 +122,7 @@ export default function EditProjectPage() {
 
       const { error: updateError } = await supabase
         .from("projects")
+        // @ts-expect-error - Supabase types not correctly inferring Update type
         .update({
           title: formData.title,
           goal: formData.goal || null,

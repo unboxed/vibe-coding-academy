@@ -72,10 +72,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .eq("id", authUser.id)
         .single()
 
-      const { data: existingProfile, error: fetchError } = await Promise.race([
+      const { data: existingProfileData, error: fetchError } = await Promise.race([
         fetchPromise,
         timeoutPromise
       ]) as Awaited<typeof fetchPromise>
+
+      const existingProfile = existingProfileData as Profile | null
 
       if (existingProfile) {
         console.log("AuthProvider: Found existing profile:", existingProfile.name)
@@ -87,8 +89,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (fetchError?.code === "PGRST116") {
         console.log("AuthProvider: Profile not found, creating new profile...")
 
-        const { data: newProfile, error: insertError } = await supabase
+        const { data: newProfileData, error: insertError } = await supabase
           .from("profiles")
+          // @ts-expect-error - Supabase types not correctly inferring Insert type
           .insert({
             id: authUser.id,
             name: fallbackProfile.name,
@@ -97,6 +100,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           })
           .select()
           .single()
+
+        const newProfile = newProfileData as Profile | null
 
         if (insertError) {
           console.error("AuthProvider: Failed to create profile:", insertError)

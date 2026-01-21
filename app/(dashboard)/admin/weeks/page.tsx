@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, Edit, Eye, EyeOff } from "lucide-react"
+import type { Week } from "@/types/database"
 
 export default async function AdminWeeksPage() {
   const supabase = await createClient()
@@ -24,14 +25,17 @@ export default async function AdminWeeksPage() {
     .eq("id", user.id)
     .single()
 
-  if (!profile || !["admin", "facilitator"].includes(profile.role)) {
+  const userRole = (profile as { role: string } | null)?.role
+  if (!profile || !userRole || !["admin", "facilitator"].includes(userRole)) {
     redirect("/")
   }
 
-  const { data: weeks } = await supabase
+  const { data: weeksData } = await supabase
     .from("weeks")
     .select("*")
     .order("number")
+
+  const weeks = weeksData as Week[] | null
 
   return (
     <div className="container mx-auto px-4 py-8">

@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { getInitials } from "@/lib/utils"
 import { Trophy, Award, Star } from "lucide-react"
+import type { Badge as BadgeType, BadgeAward } from "@/types/database"
 
 export const revalidate = 60
 
@@ -13,13 +14,15 @@ export default async function BadgesPage() {
   const supabase = await createClient()
 
   // Get all badges
-  const { data: badges } = await supabase
+  const { data: badgesData } = await supabase
     .from("badges")
     .select("*")
     .order("name")
 
+  const badges = badgesData as BadgeType[] | null
+
   // Get all badge awards with details
-  const { data: badgeAwards } = await supabase
+  const { data: badgeAwardsData } = await supabase
     .from("badge_awards")
     .select(`
       *,
@@ -27,6 +30,8 @@ export default async function BadgesPage() {
       profile:profiles(id, name, avatar_url)
     `)
     .order("created_at", { ascending: false })
+
+  const badgeAwards = badgeAwardsData as BadgeAward[] | null
 
   // Calculate leaderboard by badge count
   const leaderboard = new Map<string, { profile: any; badges: number; votes: number }>()
@@ -45,12 +50,14 @@ export default async function BadgesPage() {
   })
 
   // Get vote counts for leaderboard
-  const { data: voteData } = await supabase
+  const { data: voteDataRaw } = await supabase
     .from("votes")
     .select(`
       value,
       demo:demos(user_id)
     `)
+
+  const voteData = voteDataRaw as { value: number; demo: { user_id: string } | null }[] | null
 
   voteData?.forEach((vote) => {
     const userId = vote.demo?.user_id

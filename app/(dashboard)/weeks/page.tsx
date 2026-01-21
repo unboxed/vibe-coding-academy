@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { getLevelForWeek, getLevelName } from "@/lib/utils"
 import { ArrowRight, CheckCircle } from "lucide-react"
+import type { Week } from "@/types/database"
 
 export const revalidate = 60
 
@@ -16,16 +17,20 @@ const levelColors = {
 export default async function WeeksPage() {
   const supabase = await createClient()
 
-  const { data: weeks } = await supabase
+  const { data: weeksData } = await supabase
     .from("weeks")
     .select("*")
     .eq("published", true)
     .order("number")
 
+  const weeks = weeksData as Week[] | null
+
   // Get demo counts per week
-  const { data: demoCounts } = await supabase
+  const { data: demoCountsData } = await supabase
     .from("demos")
     .select("week_id")
+
+  const demoCounts = demoCountsData as { week_id: string }[] | null
 
   const demoCountMap = new Map<string, number>()
   demoCounts?.forEach((demo) => {

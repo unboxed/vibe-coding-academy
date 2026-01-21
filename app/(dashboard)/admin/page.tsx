@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import Link from "next/link"
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
@@ -21,7 +23,7 @@ export default async function AdminPage() {
     .from("profiles")
     .select("role")
     .eq("id", user.id)
-    .single()
+    .single() as unknown as { data: { role: string } | null }
 
   if (!profile || !["admin", "facilitator"].includes(profile.role)) {
     redirect("/")

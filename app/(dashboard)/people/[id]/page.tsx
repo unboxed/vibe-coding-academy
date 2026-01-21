@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator"
 import { getInitials } from "@/lib/utils"
 import { Github, MessageSquare, ExternalLink, ArrowLeft } from "lucide-react"
+import type { Profile, Project, BadgeAward, Demo } from "@/types/database"
 
 export const revalidate = 60
 
@@ -19,18 +20,20 @@ export default async function ProfileDetailPage({ params }: Props) {
   const { id } = await params
   const supabase = await createClient()
 
-  const { data: profile } = await supabase
+  const { data: profileData } = await supabase
     .from("profiles")
     .select("*")
     .eq("id", id)
     .single()
+
+  const profile = profileData as Profile | null
 
   if (!profile) {
     notFound()
   }
 
   // Get user's badges
-  const { data: badgeAwards } = await supabase
+  const { data: badgeAwardsData } = await supabase
     .from("badge_awards")
     .select(`
       *,
@@ -39,8 +42,10 @@ export default async function ProfileDetailPage({ params }: Props) {
     .eq("user_id", id)
     .order("created_at", { ascending: false })
 
+  const badgeAwards = badgeAwardsData as BadgeAward[] | null
+
   // Get user's demos
-  const { data: demos } = await supabase
+  const { data: demosData } = await supabase
     .from("demos")
     .select(`
       *,
@@ -49,12 +54,16 @@ export default async function ProfileDetailPage({ params }: Props) {
     .eq("user_id", id)
     .order("created_at", { ascending: false })
 
+  const demos = demosData as Demo[] | null
+
   // Get user's project
-  const { data: project } = await supabase
+  const { data: projectData } = await supabase
     .from("projects")
     .select("*")
     .eq("user_id", id)
     .single()
+
+  const project = projectData as Project | null
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">

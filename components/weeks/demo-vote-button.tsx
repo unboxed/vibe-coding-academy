@@ -30,12 +30,14 @@ export function DemoVoteButton({ demoId, currentVotes }: DemoVoteButtonProps) {
 
     try {
       // Check for existing vote
-      const { data: existingVote } = await supabase
+      const { data: existingVoteData } = await supabase
         .from("votes")
         .select("id, value")
         .eq("demo_id", demoId)
         .eq("user_id", user.id)
         .single()
+
+      const existingVote = existingVoteData as { id: string; value: number } | null
 
       if (existingVote) {
         if (existingVote.value === value) {
@@ -47,6 +49,7 @@ export function DemoVoteButton({ demoId, currentVotes }: DemoVoteButtonProps) {
           // Change vote
           await supabase
             .from("votes")
+            // @ts-expect-error - Supabase types not correctly inferring Update type
             .update({ value })
             .eq("id", existingVote.id)
           setVotes(votes - existingVote.value + value)
@@ -54,6 +57,7 @@ export function DemoVoteButton({ demoId, currentVotes }: DemoVoteButtonProps) {
         }
       } else {
         // New vote
+        // @ts-expect-error - Supabase types not correctly inferring Insert type
         await supabase.from("votes").insert({
           demo_id: demoId,
           user_id: user.id,
