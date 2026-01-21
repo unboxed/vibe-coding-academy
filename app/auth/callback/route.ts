@@ -1,33 +1,33 @@
 import { NextResponse } from "next/server"
-import { headers } from "next/headers"
 import { createClient } from "@/lib/supabase/server"
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url)
+  const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get("code")
-  const redirectTo = searchParams.get("redirectTo") || "/"
-
-  // Get the origin from forwarded headers (for Docker/proxy) or fall back to request URL
-  const headersList = await headers()
-  const forwardedHost = headersList.get("x-forwarded-host")
-  const forwardedProto = headersList.get("x-forwarded-proto") || "http"
-  const host = headersList.get("host")
-
-  const origin = forwardedHost
-    ? `${forwardedProto}://${forwardedHost}`
-    : host
-      ? `http://${host}`
-      : new URL(request.url).origin
+  // if "redirectTo" is in param, use it as the redirect URL
+  let next = searchParams.get("redirectTo") ?? "/"
+  if (!next.startsWith("/")) {
+    // if "next" is not a relative URL, use the default
+    next = "/"
+  }
 
   if (code) {
     const supabase = await createClient()
     const { error } = await supabase.auth.exchangeCodeForSession(code)
-
     if (!error) {
-      return NextResponse.redirect(`${origin}${redirectTo}`)
+      const forwardedHost = request.headers.get("x-forwarded-host") // original origin before load balancer
+      const isLocalEnv = process.env.NODE_ENV === "development"
+      if (isLocalEnv) {
+        // we can be sure that there is no load balancer in between, so no need to watch for X-Forwarded-Host
+        return NextResponse.redirect(`${origin}${next}`)
+      } else if (forwardedHost) {
+        return NextResponse.redirect(`https://${forwardedHost}${next}`)
+      } else {
+        return NextResponse.redirect(`${origin}${next}`)
+      }
     }
   }
 
-  // Return to login page if there was an error
+  // return the user to an error page with instructions
   return NextResponse.redirect(`${origin}/login?error=auth_error`)
 }
