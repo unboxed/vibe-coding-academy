@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ScreenshotGallery } from "@/components/projects/screenshot-gallery"
 import { ArrowLeft, ExternalLink, Github, Calendar, Pencil } from "lucide-react"
 import { getInitials } from "@/lib/utils"
-import { PROJECT_STATUS_LABELS, type ProjectStatus } from "@/types/database"
+import { PROJECT_STATUS_LABELS, type ProjectStatus, type Project } from "@/types/database"
 import { ProjectActions } from "./project-actions"
 
 export const revalidate = 60
@@ -26,7 +26,7 @@ interface ProjectPageProps {
 export default async function ProjectPage({ params }: ProjectPageProps) {
   const supabase = await createClient()
 
-  const { data: project } = await supabase
+  const { data: projectData } = await supabase
     .from("projects")
     .select(`
       *,
@@ -34,6 +34,8 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
     `)
     .eq("id", params.id)
     .single()
+
+  const project = projectData as Project | null
 
   if (!project) {
     notFound()
@@ -47,12 +49,14 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
   const isOwner = user?.id === project.user_id
 
   // Get other projects by same user
-  const { data: otherProjects } = await supabase
+  const { data: otherProjectsData } = await supabase
     .from("projects")
     .select("id, title, avatar_url, status")
     .eq("user_id", project.user_id)
     .neq("id", project.id)
     .limit(3)
+
+  const otherProjects = otherProjectsData as Pick<Project, "id" | "title" | "avatar_url" | "status">[] | null
 
   const createdAt = new Date(project.created_at).toLocaleDateString("en-US", {
     year: "numeric",

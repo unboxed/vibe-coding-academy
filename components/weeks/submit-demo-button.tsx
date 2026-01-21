@@ -47,6 +47,7 @@ export function SubmitDemoButton({ weekId, weekNumber }: SubmitDemoButtonProps) 
     setError(null)
 
     try {
+      // @ts-expect-error - Supabase types not correctly inferring Insert type
       const { error } = await supabase.from("demos").insert({
         week_id: weekId,
         user_id: user.id,

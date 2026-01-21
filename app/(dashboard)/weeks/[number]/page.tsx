@@ -12,6 +12,7 @@ import { getLevelForWeek, getLevelName, getInitials } from "@/lib/utils"
 import { ArrowLeft, ArrowRight, ExternalLink, Copy, ThumbsUp, ThumbsDown } from "lucide-react"
 import { DemoVoteButton } from "@/components/weeks/demo-vote-button"
 import { SubmitDemoButton } from "@/components/weeks/submit-demo-button"
+import type { Week, Demo } from "@/types/database"
 
 export const revalidate = 60
 
@@ -29,19 +30,21 @@ export default async function WeekDetailPage({ params }: Props) {
 
   const supabase = await createClient()
 
-  const { data: week } = await supabase
+  const { data: weekData } = await supabase
     .from("weeks")
     .select("*")
     .eq("number", weekNumber)
     .eq("published", true)
     .single()
 
+  const week = weekData as Week | null
+
   if (!week) {
     notFound()
   }
 
   // Get demos for this week with vote counts
-  const { data: demos } = await supabase
+  const { data: demosData } = await supabase
     .from("demos")
     .select(`
       *,
@@ -50,12 +53,16 @@ export default async function WeekDetailPage({ params }: Props) {
     .eq("week_id", week.id)
     .order("created_at", { ascending: false })
 
+  const demos = demosData as Demo[] | null
+
   // Get vote counts for demos
   const demoIds = demos?.map((d) => d.id) || []
-  const { data: votes } = await supabase
+  const { data: votesData } = await supabase
     .from("votes")
     .select("demo_id, value")
     .in("demo_id", demoIds)
+
+  const votes = votesData as { demo_id: string; value: number }[] | null
 
   // Calculate vote totals
   const voteMap = new Map<string, number>()

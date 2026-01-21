@@ -54,6 +54,7 @@ export default function ProfilePage() {
     try {
       const { error } = await supabase
         .from("profiles")
+        // @ts-expect-error - Supabase types not correctly inferring Update type
         .update({
           name: formData.name,
           bio: formData.bio || null,
