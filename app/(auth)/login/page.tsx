@@ -62,7 +62,7 @@ function LoginContent() {
 
         <Button
           onClick={handleGoogleLogin}
-          disabled={isLoading || authLoading}
+          disabled={isLoading}
           className="w-full"
           size="lg"
         >
