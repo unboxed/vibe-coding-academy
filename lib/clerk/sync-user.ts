@@ -50,6 +50,8 @@ export async function syncUserToSupabase(): Promise<Profile | null> {
     repo_url: null,
   }
 
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore - Supabase types issue with insert
   const { data, error } = await supabase
     .from('profiles')
     .insert(newProfile)
