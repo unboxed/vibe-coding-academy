@@ -8,6 +8,8 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const code = searchParams.get("code")
   const redirectTo = searchParams.get("redirectTo") || "/"
+  const errorParam = searchParams.get("error")
+  const errorDescription = searchParams.get("error_description")
 
   // Get the origin from forwarded headers (for Vercel/Docker/proxy) or fall back to request URL
   // On Vercel, x-forwarded-proto tells us the actual protocol used by the client
@@ -22,44 +24,52 @@ export async function GET(request: NextRequest) {
       ? `https://${host}`
       : request.nextUrl.origin
 
-  // Create a response that we can set cookies on
-  const redirectUrl = code
-    ? `${origin}${redirectTo}`
-    : `${origin}/login?error=auth_error`
-
-  let response = NextResponse.redirect(redirectUrl)
-
-  if (code) {
-    // Create Supabase client with cookie handling that sets on our response
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return request.cookies.getAll()
-          },
-          setAll(cookiesToSet: CookieToSet[]) {
-            // Set cookies on the response object
-            cookiesToSet.forEach(({ name, value, options }) => {
-              response.cookies.set(name, value, options)
-            })
-          },
-        },
-      }
-    )
-
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
-
-    if (!error) {
-      // Cookies are already set on response, just return it
-      return response
-    }
-
-    // If there was an error, redirect to login with error
-    return NextResponse.redirect(`${origin}/login?error=auth_error`)
+  // Handle OAuth errors from Supabase/Google
+  if (errorParam) {
+    console.error("OAuth error:", errorParam, errorDescription)
+    const errorMessage = encodeURIComponent(errorDescription || errorParam)
+    return NextResponse.redirect(`${origin}/login?error=${errorMessage}`)
   }
 
-  // Return to login page if there was no code
-  return NextResponse.redirect(`${origin}/login?error=missing_code`)
+  if (!code) {
+    console.error("No code provided in callback")
+    return NextResponse.redirect(`${origin}/login?error=missing_code`)
+  }
+
+  // Create a response that we can set cookies on
+  let response = NextResponse.redirect(`${origin}${redirectTo}`)
+
+  // Create Supabase client with cookie handling that sets on our response
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll()
+        },
+        setAll(cookiesToSet: CookieToSet[]) {
+          // Set cookies on the response object
+          cookiesToSet.forEach(({ name, value, options }) => {
+            response.cookies.set(name, value, options)
+          })
+        },
+      },
+    }
+  )
+
+  const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+
+  if (error) {
+    console.error("Error exchanging code for session:", error.message)
+    return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(error.message)}`)
+  }
+
+  if (!data.session) {
+    console.error("No session returned after code exchange")
+    return NextResponse.redirect(`${origin}/login?error=no_session`)
+  }
+
+  // Successfully exchanged code for session, cookies are set on response
+  return response
 }
