@@ -17,7 +17,14 @@ function AuthCallbackContent() {
       const code = searchParams.get("code")
       const errorParam = searchParams.get("error")
       const errorDescription = searchParams.get("error_description")
-      const redirectTo = searchParams.get("redirectTo") || "/"
+
+      // Get redirect destination from sessionStorage (set before OAuth) or query param as fallback
+      let redirectTo = "/"
+      if (typeof window !== "undefined") {
+        redirectTo = sessionStorage.getItem("authRedirectTo") || searchParams.get("redirectTo") || "/"
+        // Clear it after reading
+        sessionStorage.removeItem("authRedirectTo")
+      }
 
       console.log("Callback params:", { code: code?.slice(0, 10) + "...", errorParam, redirectTo })
 

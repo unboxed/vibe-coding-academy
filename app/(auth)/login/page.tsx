@@ -31,10 +31,15 @@ function LoginContent() {
       setIsLoading(true)
       setError(null)
 
+      // Store the redirect destination in sessionStorage before OAuth
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("authRedirectTo", redirectTo)
+      }
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback?redirectTo=${encodeURIComponent(redirectTo)}`,
+          redirectTo: `${window.location.origin}/auth/callback`,
         },
       })
 
