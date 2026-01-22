@@ -33,7 +33,7 @@ function AuthCallbackContent() {
       try {
         // Exchange the code for a session using the browser client
         // This works because the browser client has access to the PKCE code verifier
-        const { error } = await supabase.auth.exchangeCodeForSession(code)
+        const { data, error } = await supabase.auth.exchangeCodeForSession(code)
 
         if (error) {
           console.error("Error exchanging code:", error.message)
@@ -41,9 +41,17 @@ function AuthCallbackContent() {
           return
         }
 
-        // Success! Redirect to the intended destination
-        router.push(redirectTo)
-        router.refresh() // Refresh to update server components with new auth state
+        if (!data.session) {
+          console.error("No session returned")
+          router.push("/login?error=no_session")
+          return
+        }
+
+        console.log("Session established:", data.session.user.id)
+
+        // Use window.location for a full page navigation to ensure
+        // the server sees the new cookies on the next request
+        window.location.href = redirectTo
       } catch (err) {
         console.error("Callback error:", err)
         const message = err instanceof Error ? err.message : "Authentication failed"

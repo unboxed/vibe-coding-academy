@@ -1,14 +1,15 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import Link from "next/link"
 import { useSearchParams, useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { useAuth } from "@/components/providers/auth-provider"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Loader2 } from "lucide-react"
 
-export default function LoginPage() {
+function LoginContent() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const searchParams = useSearchParams()
@@ -55,34 +56,19 @@ export default function LoginPage() {
       <CardContent className="space-y-4">
         {(error || authError) && (
           <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">
-            {error || (authError === "auth_error" ? "Authentication failed. Please try again." : authError)}
+            {error || decodeURIComponent(authError || "")}
           </div>
         )}
 
         <Button
           onClick={handleGoogleLogin}
-          disabled={isLoading}
+          disabled={isLoading || authLoading}
           className="w-full"
           size="lg"
         >
           {isLoading ? (
             <span className="flex items-center gap-2">
-              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                  fill="none"
-                />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                />
-              </svg>
+              <Loader2 className="h-4 w-4 animate-spin" />
               Signing in...
             </span>
           ) : (
@@ -124,5 +110,21 @@ export default function LoginPage() {
         </div>
       </CardContent>
     </Card>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <Card className="w-full max-w-md mx-4">
+          <CardContent className="py-12 flex items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin" />
+          </CardContent>
+        </Card>
+      }
+    >
+      <LoginContent />
+    </Suspense>
   )
 }
