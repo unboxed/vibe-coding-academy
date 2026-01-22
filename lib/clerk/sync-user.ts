@@ -50,6 +50,7 @@ export async function syncUserToSupabase(): Promise<Profile | null> {
     repo_url: null,
   }
 
+  // @ts-expect-error - Supabase types not correctly inferring Insert type
   const { data, error } = await supabase
     .from('profiles')
     .insert(newProfile)
