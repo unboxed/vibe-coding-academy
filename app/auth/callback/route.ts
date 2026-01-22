@@ -9,15 +9,17 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get("code")
   const redirectTo = searchParams.get("redirectTo") || "/"
 
-  // Get the origin from forwarded headers (for Docker/proxy) or fall back to request URL
+  // Get the origin from forwarded headers (for Vercel/Docker/proxy) or fall back to request URL
+  // On Vercel, x-forwarded-proto tells us the actual protocol used by the client
   const forwardedHost = request.headers.get("x-forwarded-host")
-  const forwardedProto = request.headers.get("x-forwarded-proto") || "http"
+  const forwardedProto = request.headers.get("x-forwarded-proto") || "https"
   const host = request.headers.get("host")
 
+  // Prefer forwarded headers (Vercel sets these), fall back to host header with https
   const origin = forwardedHost
     ? `${forwardedProto}://${forwardedHost}`
     : host
-      ? `${request.nextUrl.protocol}//${host}`
+      ? `https://${host}`
       : request.nextUrl.origin
 
   // Create a response that we can set cookies on
