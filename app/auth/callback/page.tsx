@@ -8,6 +8,7 @@ import { Loader2 } from "lucide-react"
 function AuthCallbackContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const [status, setStatus] = useState<string>("Processing...")
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -18,66 +19,73 @@ function AuthCallbackContent() {
       const errorDescription = searchParams.get("error_description")
       const redirectTo = searchParams.get("redirectTo") || "/"
 
-      // Handle OAuth errors
+      console.log("Callback params:", { code: code?.slice(0, 10) + "...", errorParam, redirectTo })
+
+      // Handle OAuth errors from provider
       if (errorParam) {
-        console.error("OAuth error:", errorParam, errorDescription)
-        router.push(`/login?error=${encodeURIComponent(errorDescription || errorParam)}`)
+        const msg = errorDescription || errorParam
+        console.error("OAuth error:", msg)
+        setError(msg)
+        setTimeout(() => router.push(`/login?error=${encodeURIComponent(msg)}`), 2000)
         return
       }
 
       if (!code) {
-        router.push("/login?error=missing_code")
+        setError("No authorization code received")
+        setTimeout(() => router.push("/login?error=missing_code"), 2000)
         return
       }
 
-      try {
-        // Exchange the code for a session using the browser client
-        // This works because the browser client has access to the PKCE code verifier
-        const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+      setStatus("Exchanging code for session...")
 
-        if (error) {
-          console.error("Error exchanging code:", error.message)
-          router.push(`/login?error=${encodeURIComponent(error.message)}`)
+      try {
+        const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
+
+        if (exchangeError) {
+          console.error("Exchange error:", exchangeError.message)
+          setError(exchangeError.message)
+          setTimeout(() => router.push(`/login?error=${encodeURIComponent(exchangeError.message)}`), 2000)
           return
         }
 
         if (!data.session) {
-          console.error("No session returned")
-          router.push("/login?error=no_session")
+          setError("No session returned from exchange")
+          setTimeout(() => router.push("/login?error=no_session"), 2000)
           return
         }
 
-        console.log("Session established:", data.session.user.id)
+        console.log("Session established for user:", data.session.user.email)
+        setStatus(`Signed in as ${data.session.user.email}! Redirecting...`)
 
-        // Use window.location for a full page navigation to ensure
-        // the server sees the new cookies on the next request
-        window.location.href = redirectTo
+        // Small delay to show success message, then redirect
+        setTimeout(() => {
+          window.location.href = redirectTo
+        }, 1000)
       } catch (err) {
         console.error("Callback error:", err)
         const message = err instanceof Error ? err.message : "Authentication failed"
-        router.push(`/login?error=${encodeURIComponent(message)}`)
+        setError(message)
+        setTimeout(() => router.push(`/login?error=${encodeURIComponent(message)}`), 2000)
       }
     }
 
     handleCallback()
   }, [router, searchParams])
 
-  if (error) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <p className="text-destructive">{error}</p>
-          <p className="mt-2 text-sm text-muted-foreground">Redirecting to login...</p>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="flex min-h-screen items-center justify-center">
-      <div className="flex flex-col items-center gap-4">
-        <Loader2 className="h-8 w-8 animate-spin" />
-        <p className="text-muted-foreground">Completing sign in...</p>
+      <div className="flex flex-col items-center gap-4 max-w-md text-center px-4">
+        {error ? (
+          <>
+            <div className="text-destructive font-medium">Error: {error}</div>
+            <p className="text-sm text-muted-foreground">Redirecting to login...</p>
+          </>
+        ) : (
+          <>
+            <Loader2 className="h-8 w-8 animate-spin" />
+            <p className="text-muted-foreground">{status}</p>
+          </>
+        )}
       </div>
     </div>
   )
