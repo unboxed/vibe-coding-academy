@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
-import { useAuth } from "@/components/providers/auth-provider"
+import { useProfile } from "@/hooks/use-profile"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -21,7 +21,7 @@ import { getInitials } from "@/lib/utils"
 import type { Profile, UserRole } from "@/types/database"
 
 export default function AdminUsersPage() {
-  const { profile: currentProfile } = useAuth()
+  const { profile: currentProfile } = useProfile()
   const router = useRouter()
   const supabase = createClient()
 

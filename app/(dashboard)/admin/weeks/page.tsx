@@ -1,34 +1,28 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
+import { currentUser } from "@clerk/nextjs/server"
+import { getProfile } from "@/lib/clerk/sync-user"
+import { createAdminClient } from "@/lib/supabase/server"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, Edit, Eye, EyeOff } from "lucide-react"
 import type { Week } from "@/types/database"
 
 export default async function AdminWeeksPage() {
-  const supabase = await createClient()
-
-  // Check if user is admin/facilitator
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await currentUser()
 
   if (!user) {
-    redirect("/login?redirectTo=/admin/weeks")
+    redirect("/sign-in?redirect_url=/admin/weeks")
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single()
+  const profile = await getProfile()
 
-  const userRole = (profile as { role: string } | null)?.role
-  if (!profile || !userRole || !["admin", "facilitator"].includes(userRole)) {
+  if (!profile || !["admin", "facilitator"].includes(profile.role)) {
     redirect("/")
   }
+
+  const supabase = await createAdminClient()
 
   const { data: weeksData } = await supabase
     .from("weeks")

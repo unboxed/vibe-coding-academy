@@ -5,7 +5,7 @@ import { useRouter, useParams } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Loader2 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
-import { useAuth } from "@/components/providers/auth-provider"
+import { useProfile } from "@/hooks/use-profile"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -46,7 +46,7 @@ export default function EditProjectPage() {
   const router = useRouter()
   const params = useParams()
   const projectId = params.id as string
-  const { user } = useAuth()
+  const { user } = useProfile()
 
   const [isLoading, setIsLoading] = React.useState(true)
   const [isSubmitting, setIsSubmitting] = React.useState(false)

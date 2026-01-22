@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation"
 import Link from "next/link"
-import { createClient } from "@/lib/supabase/server"
+import { currentUser } from "@clerk/nextjs/server"
+import { createAdminClient } from "@/lib/supabase/server"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -24,7 +25,7 @@ interface ProjectPageProps {
 }
 
 export default async function ProjectPage({ params }: ProjectPageProps) {
-  const supabase = await createClient()
+  const supabase = await createAdminClient()
 
   const { data: projectData } = await supabase
     .from("projects")
@@ -42,10 +43,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
   }
 
   // Get current user to check ownership
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
+  const user = await currentUser()
   const isOwner = user?.id === project.user_id
 
   // Get other projects by same user

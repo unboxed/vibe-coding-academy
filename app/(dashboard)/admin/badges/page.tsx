@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
-import { useAuth } from "@/components/providers/auth-provider"
+import { useProfile } from "@/hooks/use-profile"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -32,7 +32,7 @@ import { getInitials } from "@/lib/utils"
 import type { Badge as BadgeType, Profile } from "@/types/database"
 
 export default function AdminBadgesPage() {
-  const { user, profile } = useAuth()
+  const { user, profile } = useProfile()
   const router = useRouter()
   const supabase = createClient()
 

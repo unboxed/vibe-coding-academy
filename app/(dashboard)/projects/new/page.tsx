@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Loader2 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
-import { useAuth } from "@/components/providers/auth-provider"
+import { useProfile } from "@/hooks/use-profile"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -44,7 +44,7 @@ interface FormData {
 
 export default function NewProjectPage() {
   const router = useRouter()
-  const { user, isLoading } = useAuth()
+  const { user, isLoading } = useProfile()
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
   const [projectId] = React.useState(() => crypto.randomUUID())

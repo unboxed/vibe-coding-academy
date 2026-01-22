@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { useAuth } from "@/components/providers/auth-provider"
+import { useProfile } from "@/hooks/use-profile"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -13,7 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { getInitials } from "@/lib/utils"
 
 export default function ProfilePage() {
-  const { profile, refreshProfile, isLoading: authLoading } = useAuth()
+  const { profile, refreshProfile, isLoading: authLoading } = useProfile()
   const router = useRouter()
   const supabase = createClient()
 

@@ -2,32 +2,26 @@ export const dynamic = 'force-dynamic'
 
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
+import { currentUser } from "@clerk/nextjs/server"
+import { getProfile } from "@/lib/clerk/sync-user"
+import { createAdminClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Calendar, Award, Users, Settings } from "lucide-react"
+import { Calendar, Award, Users } from "lucide-react"
 
 export default async function AdminPage() {
-  const supabase = await createClient()
-
-  // Check if user is admin/facilitator
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await currentUser()
 
   if (!user) {
-    redirect("/login?redirectTo=/admin")
+    redirect("/sign-in?redirect_url=/admin")
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single() as unknown as { data: { role: string } | null }
+  const profile = await getProfile()
 
   if (!profile || !["admin", "facilitator"].includes(profile.role)) {
     redirect("/")
   }
+
+  const supabase = await createAdminClient()
 
   // Get counts for dashboard
   const { count: weekCount } = await supabase
