@@ -1,18 +1,53 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
+import { useAuth } from "@/components/providers/auth-provider"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Loader2 } from "lucide-react"
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const searchParams = useSearchParams()
+  const router = useRouter()
+  const { user, isLoading: authLoading } = useAuth()
   const redirectTo = searchParams.get("redirectTo") || "/"
+  const authError = searchParams.get("error")
   const supabase = createClient()
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (!authLoading && user) {
+      router.push(redirectTo)
+    }
+  }, [user, authLoading, redirectTo, router])
+
+  // Show loading while checking auth
+  if (authLoading) {
+    return (
+      <Card className="w-full max-w-md mx-4">
+        <CardContent className="py-12 flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </CardContent>
+      </Card>
+    )
+  }
+
+  // If user is logged in, show redirecting message
+  if (user) {
+    return (
+      <Card className="w-full max-w-md mx-4">
+        <CardContent className="py-12 flex flex-col items-center justify-center gap-2">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <p className="text-muted-foreground">Redirecting...</p>
+        </CardContent>
+      </Card>
+    )
+  }
 
   const handleGoogleLogin = async () => {
     try {
@@ -42,9 +77,9 @@ export default function LoginPage() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {error && (
+        {(error || authError) && (
           <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">
-            {error}
+            {error || (authError === "auth_error" ? "Authentication failed. Please try again." : authError)}
           </div>
         )}
 
