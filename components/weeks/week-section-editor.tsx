@@ -1,7 +1,6 @@
 'use client'
 
 import * as React from 'react'
-import ReactMarkdown from 'react-markdown'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -16,6 +15,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Loader2 } from 'lucide-react'
 import { createSection, updateSection } from '@/app/actions/admin'
+import { RichTextEditor } from '@/components/ui/rich-text-editor'
 import type { WeekSection } from '@/types/database'
 
 interface WeekSectionEditorProps {
@@ -128,13 +128,20 @@ export function WeekSectionEditor({
           </div>
 
           <div className="space-y-2">
-            <Label>Content (Markdown)</Label>
-            <Tabs defaultValue="edit" className="w-full">
+            <Label>Content</Label>
+            <Tabs defaultValue="visual" className="w-full">
               <TabsList className="mb-2">
-                <TabsTrigger value="edit">Edit</TabsTrigger>
-                <TabsTrigger value="preview">Preview</TabsTrigger>
+                <TabsTrigger value="visual">Visual Editor</TabsTrigger>
+                <TabsTrigger value="source">Markdown Source</TabsTrigger>
               </TabsList>
-              <TabsContent value="edit">
+              <TabsContent value="visual">
+                <RichTextEditor
+                  content={content}
+                  onChange={setContent}
+                  placeholder="Write your content here... Paste formatted text and it will preserve formatting."
+                />
+              </TabsContent>
+              <TabsContent value="source">
                 <Textarea
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
@@ -142,15 +149,6 @@ export function WeekSectionEditor({
                   rows={15}
                   className="font-mono text-sm"
                 />
-              </TabsContent>
-              <TabsContent value="preview">
-                <div className="border rounded-lg p-4 min-h-[300px] prose prose-slate max-w-none">
-                  {content ? (
-                    <ReactMarkdown>{content}</ReactMarkdown>
-                  ) : (
-                    <p className="text-muted-foreground">No content to preview</p>
-                  )}
-                </div>
               </TabsContent>
             </Tabs>
           </div>
