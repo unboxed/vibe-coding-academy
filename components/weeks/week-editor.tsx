@@ -28,10 +28,9 @@ interface WeekEditorProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSuccess: () => void
-  existingWeekNumbers?: number[]
 }
 
-export function WeekEditor({ week, open, onOpenChange, onSuccess, existingWeekNumbers = [] }: WeekEditorProps) {
+export function WeekEditor({ week, open, onOpenChange, onSuccess }: WeekEditorProps) {
   const router = useRouter()
   const [number, setNumber] = React.useState<number | null>(week?.number ?? null)
   const [title, setTitle] = React.useState(week?.title || '')
@@ -41,9 +40,6 @@ export function WeekEditor({ week, open, onOpenChange, onSuccess, existingWeekNu
   const [error, setError] = React.useState<string | null>(null)
 
   const isEditing = !!week
-
-  // All week numbers 1-10
-  const allNumbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
   React.useEffect(() => {
     if (open) {
@@ -111,30 +107,15 @@ export function WeekEditor({ week, open, onOpenChange, onSuccess, existingWeekNu
             <div className="space-y-2">
               <Label htmlFor="number">Week Number</Label>
               <div className="flex gap-2">
-                <Select
-                  value={number?.toString() || 'none'}
-                  onValueChange={(value) => setNumber(value === 'none' ? null : parseInt(value))}
-                >
-                  <SelectTrigger className="flex-1">
-                    <SelectValue placeholder="No number" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">No number</SelectItem>
-                    {allNumbers.map((n) => {
-                      const exists = existingWeekNumbers.includes(n)
-                      const isCurrent = week?.number === n
-                      return (
-                        <SelectItem
-                          key={n}
-                          value={n.toString()}
-                          disabled={exists && !isCurrent}
-                        >
-                          Week {n}{exists && !isCurrent ? ' (taken)' : ''}
-                        </SelectItem>
-                      )
-                    })}
-                  </SelectContent>
-                </Select>
+                <Input
+                  id="number"
+                  type="number"
+                  min="1"
+                  value={number ?? ''}
+                  onChange={(e) => setNumber(e.target.value ? parseInt(e.target.value) : null)}
+                  placeholder="Optional"
+                  className="flex-1"
+                />
                 {number !== null && (
                   <Button
                     type="button"
@@ -148,7 +129,7 @@ export function WeekEditor({ week, open, onOpenChange, onSuccess, existingWeekNu
                 )}
               </div>
               <p className="text-xs text-muted-foreground">
-                Optional - assign a week number as a tag
+                Optional - existing weeks will auto-shift if needed
               </p>
             </div>
 

@@ -5,7 +5,7 @@ import { getProfile } from "@/lib/clerk/sync-user"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { WeekContent } from "@/components/weeks/week-content"
-import { getLevelForWeek, getLevelName } from "@/lib/utils"
+import { getLevelName } from "@/lib/utils"
 import { ArrowLeft, ArrowRight } from "lucide-react"
 import type { Week, WeekSection, Demo } from "@/types/database"
 
@@ -89,11 +89,11 @@ export default async function WeekDetailPage({ params }: Props) {
     voteMap.set(vote.demo_id, current + vote.value)
   })
 
-  // For numbered weeks, calculate level and navigation
+  // Use stored level and calculate navigation
   const hasNumber = week.number !== null
-  const level = hasNumber ? getLevelForWeek(week.number!) : week.level
+  const level = week.level  // Always use stored level, not calculated
   const prevWeek = hasNumber && week.number! > 1 ? week.number! - 1 : null
-  const nextWeek = hasNumber && week.number! < 10 ? week.number! + 1 : null
+  const nextWeek = hasNumber ? week.number! + 1 : null  // No upper limit
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">

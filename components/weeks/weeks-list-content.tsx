@@ -19,7 +19,7 @@ import {
 import { ArrowRight, CheckCircle, Plus, Pencil, Trash2 } from 'lucide-react'
 import { deleteWeek } from '@/app/actions/admin'
 import { WeekEditor } from './week-editor'
-import { getLevelForWeek, getLevelName } from '@/lib/utils'
+import { getLevelName } from '@/lib/utils'
 import type { Week } from '@/types/database'
 
 interface WeeksListContentProps {
@@ -44,20 +44,14 @@ export function WeeksListContent({ weeks, demoCountMap, isAdmin }: WeeksListCont
   // Show all weeks
   const visibleWeeks = weeks
 
-  // Separate numbered and unnumbered weeks
-  const numberedWeeks = visibleWeeks.filter(w => w.number !== null)
-  const unnumberedWeeks = visibleWeeks.filter(w => w.number === null)
-
-  // Group numbered weeks by level
-  const weeksByLevel = numberedWeeks.reduce((acc, week) => {
-    const level = getLevelForWeek(week.number!)
+  // Group ALL weeks by level (use stored level, not calculated from week number)
+  // Weeks without numbers will still appear in their correct level section
+  const weeksByLevel = visibleWeeks.reduce((acc, week) => {
+    const level = week.level
     if (!acc[level]) acc[level] = []
     acc[level].push(week)
     return acc
   }, {} as Record<number, Week[]>)
-
-  // Get existing week numbers for the editor (filter out nulls)
-  const existingWeekNumbers = weeks.map(w => w.number).filter((n): n is number => n !== null)
 
   const handleDeleteWeek = async () => {
     if (!deletingWeek) return
@@ -103,9 +97,9 @@ export function WeeksListContent({ weeks, demoCountMap, isAdmin }: WeeksListCont
               <div>
                 <h2 className="text-xl font-semibold">{getLevelName(level)}</h2>
                 <p className="text-sm text-muted-foreground">
-                  {level === 1 && 'Weeks 1-3: Foundation'}
-                  {level === 2 && 'Weeks 4-5: Intermediate'}
-                  {level === 3 && 'Weeks 6-10: Advanced'}
+                  {level === 1 && 'Foundation level content'}
+                  {level === 2 && 'Intermediate level content'}
+                  {level === 3 && 'Advanced level content'}
                 </p>
               </div>
             </div>
@@ -121,7 +115,7 @@ export function WeeksListContent({ weeks, demoCountMap, isAdmin }: WeeksListCont
                             <Badge
                               variant={`level${level}` as 'level1' | 'level2' | 'level3'}
                             >
-                              Week {week.number}
+                              {week.number ? `Week ${week.number}` : getLevelName(level)}
                             </Badge>
                           </div>
                           <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
@@ -185,87 +179,6 @@ export function WeeksListContent({ weeks, demoCountMap, isAdmin }: WeeksListCont
           </section>
         ))}
 
-        {/* Unnumbered Weeks Section */}
-        {unnumberedWeeks.length > 0 && (
-          <section>
-            <div className="flex items-center gap-3 mb-6">
-              <div className="h-8 w-1 rounded-full bg-muted-foreground/50" />
-              <div>
-                <h2 className="text-xl font-semibold">Unnumbered</h2>
-                <p className="text-sm text-muted-foreground">
-                  Weeks without a number assigned
-                </p>
-              </div>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {unnumberedWeeks.map((week) => (
-                <div key={week.id} className="relative group">
-                  <Link href={`/weeks/${week.id}`}>
-                    <Card className="h-full hover:shadow-md transition-all hover:border-primary/50">
-                      <CardHeader className="pb-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Badge variant="outline">
-                              Unnumbered
-                            </Badge>
-                          </div>
-                          <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                        </div>
-                        <CardTitle className="text-lg mt-2">{week.title}</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        {week.overview && (
-                          <CardDescription className="line-clamp-2">
-                            {week.overview.replace(/^#+\s*Overview\s*\n*/i, '').replace(/^#+\s*[^\n]+\n*/gm, '').slice(0, 150)}...
-                          </CardDescription>
-                        )}
-                        <div className="flex items-center gap-4 mt-4 text-sm text-muted-foreground">
-                          {demoCountMap.get(week.id) ? (
-                            <span className="flex items-center gap-1">
-                              <CheckCircle className="h-4 w-4" />
-                              {demoCountMap.get(week.id)} demos
-                            </span>
-                          ) : null}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </Link>
-
-                  {/* Admin Edit/Delete Buttons */}
-                  {isAdmin && (
-                    <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button
-                        variant="secondary"
-                        size="icon"
-                        className="h-7 w-7"
-                        onClick={(e) => {
-                          e.preventDefault()
-                          e.stopPropagation()
-                          setEditingWeek(week)
-                        }}
-                      >
-                        <Pencil className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        size="icon"
-                        className="h-7 w-7 hover:bg-destructive hover:text-destructive-foreground"
-                        onClick={(e) => {
-                          e.preventDefault()
-                          e.stopPropagation()
-                          setDeletingWeek(week)
-                        }}
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
       </div>
 
       {visibleWeeks.length === 0 && (
@@ -280,7 +193,6 @@ export function WeeksListContent({ weeks, demoCountMap, isAdmin }: WeeksListCont
         open={isCreateOpen}
         onOpenChange={setIsCreateOpen}
         onSuccess={handleSuccess}
-        existingWeekNumbers={existingWeekNumbers}
       />
 
       {/* Edit Week Dialog */}
@@ -289,7 +201,6 @@ export function WeeksListContent({ weeks, demoCountMap, isAdmin }: WeeksListCont
         open={!!editingWeek}
         onOpenChange={(open) => !open && setEditingWeek(null)}
         onSuccess={handleSuccess}
-        existingWeekNumbers={existingWeekNumbers}
       />
 
       {/* Delete Confirmation */}

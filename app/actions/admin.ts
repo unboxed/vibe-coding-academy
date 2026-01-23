@@ -121,6 +121,27 @@ export async function removeBadgeAward(awardId: string) {
 // Week Operations
 // ===================
 
+// Helper to shift week numbers when a new number is assigned
+async function shiftWeekNumbers(supabase: ReturnType<typeof createAdminClient> extends Promise<infer T> ? T : never, newNumber: number, excludeWeekId?: string) {
+  // Get all weeks with number >= newNumber, ordered descending (to avoid unique constraint conflicts)
+  const { data: weeksToShift } = await supabase
+    .from('weeks')
+    .select('id, number')
+    .gte('number', newNumber)
+    .not('number', 'is', null)
+    .order('number', { ascending: false })
+
+  // Shift each one up by 1 (start from highest to avoid conflicts)
+  for (const week of (weeksToShift as { id: string; number: number }[]) || []) {
+    if (week.id !== excludeWeekId) {
+      await supabase
+        .from('weeks')
+        .update({ number: week.number + 1 } as never)
+        .eq('id', week.id)
+    }
+  }
+}
+
 export async function createWeek(data: {
   number: number | null
   title: string
@@ -130,6 +151,11 @@ export async function createWeek(data: {
 }) {
   await requireAdmin()
   const supabase = await createAdminClient()
+
+  // If a number is provided, shift existing weeks to make room
+  if (data.number !== null) {
+    await shiftWeekNumbers(supabase, data.number)
+  }
 
   const { data: week, error } = await supabase
     .from('weeks')
@@ -183,6 +209,20 @@ export async function updateWeek(id: string, data: {
 }) {
   await requireAdmin()
   const supabase = await createAdminClient()
+
+  // If number is being changed, shift other weeks to make room
+  if (data.number !== undefined && data.number !== null) {
+    // Get current week to check if number is actually changing
+    const { data: currentWeek } = await supabase
+      .from('weeks')
+      .select('number')
+      .eq('id', id)
+      .single()
+
+    if (currentWeek && (currentWeek as { number: number | null }).number !== data.number) {
+      await shiftWeekNumbers(supabase, data.number, id)
+    }
+  }
 
   const { error } = await supabase
     .from('weeks')
@@ -417,6 +457,7 @@ export async function awardBadgeToProject(data: { badge_id: string; project_id: 
     .insert({
       badge_id: data.badge_id,
       project_id: data.project_id,
+      user_id: null,  // Explicitly null for project badges
       awarded_by: profile.id,
     } as never)
 
