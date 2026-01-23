@@ -87,8 +87,17 @@ export function BadgeEditor({ badge, open, onOpenChange, onSuccess }: BadgeEdito
 
       onSuccess()
       onOpenChange(false)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save badge')
+    } catch (err: unknown) {
+      console.error('Badge save error:', err)
+      // Supabase errors have code, message, details, hint properties
+      const supabaseError = err as { message?: string; code?: string; hint?: string }
+      if (supabaseError.code === '42501') {
+        setError('Permission denied. Make sure you are logged in as an admin and the database migration has been run.')
+      } else if (supabaseError.message) {
+        setError(supabaseError.message)
+      } else {
+        setError('Failed to save badge. Check console for details.')
+      }
     } finally {
       setIsSubmitting(false)
     }

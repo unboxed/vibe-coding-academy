@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { RoleSelector } from "@/components/people/role-selector"
+import { DeleteMemberButton } from "@/components/people/delete-member-button"
 import { getInitials } from "@/lib/utils"
 import { Github, MessageSquare } from "lucide-react"
 import type { Profile } from "@/types/database"
@@ -92,11 +93,19 @@ export default async function PeoplePage() {
 
                     <div className="flex items-center gap-2">
                       {isAdmin ? (
-                        <RoleSelector
-                          userId={profile.id}
-                          currentRole={profile.role}
-                          disabled={profile.id === currentProfile?.id}
-                        />
+                        <>
+                          <RoleSelector
+                            userId={profile.id}
+                            currentRole={profile.role}
+                            disabled={profile.id === currentProfile?.id}
+                          />
+                          {profile.id !== currentProfile?.id && (
+                            <DeleteMemberButton
+                              userId={profile.id}
+                              userName={profile.name}
+                            />
+                          )}
+                        </>
                       ) : (
                         <Badge variant="secondary" className="text-xs">
                           {profile.role}

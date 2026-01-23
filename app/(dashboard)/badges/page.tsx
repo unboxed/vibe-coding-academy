@@ -7,8 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { BadgeAdminPanel, RemoveBadgeButton } from "@/components/badges/badge-admin-panel"
 import { getInitials } from "@/lib/utils"
-import { Trophy, Award, Star } from "lucide-react"
-import type { Badge as BadgeType, BadgeAward, Profile } from "@/types/database"
+import { Trophy, Award, Star, FolderKanban } from "lucide-react"
+import type { Badge as BadgeType, BadgeAward, Profile, Project } from "@/types/database"
 
 export const revalidate = 60
 
@@ -46,6 +46,24 @@ export default async function BadgesPage() {
     .order("created_at", { ascending: false })
 
   const badgeAwards = badgeAwardsData as BadgeAward[] | null
+
+  // Get all projects with their owners and badge counts
+  const { data: projectsData } = await supabase
+    .from("projects")
+    .select(`
+      *,
+      profile:profiles(id, name, avatar_url)
+    `)
+    .order("title")
+
+  // Add badge info to projects
+  const projectsWithBadges = (projectsData || []).map((project: Project & { profile: Profile }) => {
+    const ownerBadges = badgeAwards?.filter(a => a.user_id === project.user_id) || []
+    return {
+      ...project,
+      ownerBadges,
+    }
+  })
 
   // Calculate leaderboard by badge count
   const leaderboard = new Map<string, { profile: any; badges: number; votes: number }>()
@@ -106,7 +124,7 @@ export default async function BadgesPage() {
       )}
 
       <Tabs defaultValue="leaderboard" className="space-y-6">
-        <TabsList>
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="leaderboard" className="gap-2">
             <Trophy className="h-4 w-4" />
             Leaderboard
@@ -114,6 +132,10 @@ export default async function BadgesPage() {
           <TabsTrigger value="badges" className="gap-2">
             <Award className="h-4 w-4" />
             All Badges
+          </TabsTrigger>
+          <TabsTrigger value="projects" className="gap-2">
+            <FolderKanban className="h-4 w-4" />
+            Projects
           </TabsTrigger>
           <TabsTrigger value="recent" className="gap-2">
             <Star className="h-4 w-4" />
@@ -224,6 +246,75 @@ export default async function BadgesPage() {
               </CardContent>
             </Card>
           )}
+        </TabsContent>
+
+        <TabsContent value="projects">
+          <Card>
+            <CardHeader>
+              <CardTitle>All Projects</CardTitle>
+              <CardDescription>
+                Projects built by participants during the programme
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {projectsWithBadges.length > 0 ? (
+                <div className="space-y-4">
+                  {projectsWithBadges.map((project) => (
+                    <Link
+                      key={project.id}
+                      href={`/projects/${project.id}`}
+                    >
+                      <div className="flex items-center gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors border">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{project.title}</p>
+                          {project.description && (
+                            <p className="text-sm text-muted-foreground line-clamp-1">
+                              {project.description}
+                            </p>
+                          )}
+                          <div className="flex items-center gap-2 mt-2">
+                            <Avatar className="h-6 w-6">
+                              <AvatarImage
+                                src={project.profile?.avatar_url || ""}
+                                alt={project.profile?.name || ""}
+                              />
+                              <AvatarFallback className="text-xs">
+                                {getInitials(project.profile?.name || "?")}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="text-sm text-muted-foreground">
+                              {project.profile?.name}
+                            </span>
+                            {project.ownerBadges.length > 0 && (
+                              <div className="flex gap-1">
+                                {project.ownerBadges.slice(0, 3).map((award: BadgeAward) => (
+                                  <div
+                                    key={award.id}
+                                    className="w-4 h-4 rounded-full"
+                                    style={{ backgroundColor: award.badge?.color }}
+                                    title={award.badge?.name}
+                                  />
+                                ))}
+                                {project.ownerBadges.length > 3 && (
+                                  <span className="text-xs text-muted-foreground">
+                                    +{project.ownerBadges.length - 3}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-center text-muted-foreground py-8">
+                  No projects yet.
+                </p>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="recent">

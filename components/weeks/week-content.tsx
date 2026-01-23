@@ -15,6 +15,16 @@ import { SubmitDemoButton } from '@/components/weeks/submit-demo-button'
 import { getInitials } from '@/lib/utils'
 import type { Week, WeekSection, Demo } from '@/types/database'
 
+// Static Tailwind class mapping - dynamic classes don't work with Tailwind's purge
+const gridColsClass: Record<number, string> = {
+  1: 'grid-cols-1',
+  2: 'grid-cols-2',
+  3: 'grid-cols-3',
+  4: 'grid-cols-4',
+  5: 'grid-cols-5',
+  6: 'grid-cols-6',
+}
+
 interface WeekContentProps {
   week: Week
   sections: WeekSection[]
@@ -66,7 +76,7 @@ export function WeekContent({
 
       {/* Content Tabs */}
       <Tabs defaultValue={defaultTab} className="space-y-6">
-        <TabsList className={`grid w-full grid-cols-${Math.min(visibleSections.length + 1, 6)}`}>
+        <TabsList className={`grid w-full ${gridColsClass[Math.min(visibleSections.length + 1, 6)]}`}>
           {visibleSections.map((section) => (
             <TabsTrigger key={section.slug} value={section.slug}>
               {section.title}
