@@ -12,17 +12,11 @@ export default async function WeeksPage() {
   const currentProfile = await getProfile()
   const isAdmin = currentProfile?.role === 'admin'
 
-  // Fetch weeks - admins see all, others see only published
-  const query = supabase
+  // Fetch all weeks
+  const { data: weeksData } = await supabase
     .from("weeks")
     .select("*")
     .order("number")
-
-  if (!isAdmin) {
-    query.eq("published", true)
-  }
-
-  const { data: weeksData } = await query
   const weeks = (weeksData as Week[]) || []
 
   // Get demo counts per week

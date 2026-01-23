@@ -17,30 +17,36 @@ interface Props {
 
 export default async function WeekDetailPage({ params }: Props) {
   const { number } = await params
-  const weekNumber = parseInt(number)
-
-  if (isNaN(weekNumber) || weekNumber < 1 || weekNumber > 10) {
-    notFound()
-  }
-
   const supabase = await createClient()
 
   // Check if current user is admin
   const profile = await getProfile()
   const isAdmin = profile?.role === 'admin'
 
-  // Get week - admins can see unpublished weeks
-  const weekQuery = supabase
-    .from("weeks")
-    .select("*")
-    .eq("number", weekNumber)
+  // Determine if param is a UUID or a week number
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(number)
+  const weekNumber = parseInt(number)
 
-  if (!isAdmin) {
-    weekQuery.eq("published", true)
+  // Get week by UUID or by number
+  let weekData: Week | null = null
+
+  if (isUUID) {
+    const { data } = await supabase
+      .from("weeks")
+      .select("*")
+      .eq("id", number)
+      .single()
+    weekData = data as Week | null
+  } else if (!isNaN(weekNumber)) {
+    const { data } = await supabase
+      .from("weeks")
+      .select("*")
+      .eq("number", weekNumber)
+      .single()
+    weekData = data as Week | null
   }
 
-  const { data: weekData } = await weekQuery.single()
-  const week = weekData as Week | null
+  const week = weekData
 
   if (!week) {
     notFound()
@@ -83,9 +89,11 @@ export default async function WeekDetailPage({ params }: Props) {
     voteMap.set(vote.demo_id, current + vote.value)
   })
 
-  const level = getLevelForWeek(weekNumber)
-  const prevWeek = weekNumber > 1 ? weekNumber - 1 : null
-  const nextWeek = weekNumber < 10 ? weekNumber + 1 : null
+  // For numbered weeks, calculate level and navigation
+  const hasNumber = week.number !== null
+  const level = hasNumber ? getLevelForWeek(week.number!) : week.level
+  const prevWeek = hasNumber && week.number! > 1 ? week.number! - 1 : null
+  const nextWeek = hasNumber && week.number! < 10 ? week.number! + 1 : null
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -120,15 +128,14 @@ export default async function WeekDetailPage({ params }: Props) {
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-4">
-          <Badge variant={`level${level}` as "level1" | "level2" | "level3"}>
-            Week {weekNumber}
-          </Badge>
-          <Badge variant="outline">{getLevelName(level)}</Badge>
-          {!week.published && isAdmin && (
-            <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
-              Draft
+          {hasNumber ? (
+            <Badge variant={`level${level}` as "level1" | "level2" | "level3"}>
+              Week {week.number}
             </Badge>
+          ) : (
+            <Badge variant="outline">Unnumbered</Badge>
           )}
+          <Badge variant="outline">{getLevelName(level)}</Badge>
         </div>
         <h1 className="text-3xl font-bold tracking-tight">{week.title}</h1>
       </div>

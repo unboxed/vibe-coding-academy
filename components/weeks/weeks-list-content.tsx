@@ -6,8 +6,6 @@ import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Switch } from '@/components/ui/switch'
-import { Label } from '@/components/ui/label'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,7 +16,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { ArrowRight, CheckCircle, Plus, Pencil, Trash2, EyeOff } from 'lucide-react'
+import { ArrowRight, CheckCircle, Plus, Pencil, Trash2 } from 'lucide-react'
 import { deleteWeek } from '@/app/actions/admin'
 import { WeekEditor } from './week-editor'
 import { getLevelForWeek, getLevelName } from '@/lib/utils'
@@ -38,16 +36,13 @@ const levelColors = {
 
 export function WeeksListContent({ weeks, demoCountMap, isAdmin }: WeeksListContentProps) {
   const router = useRouter()
-  const [showUnpublished, setShowUnpublished] = React.useState(true)
   const [isCreateOpen, setIsCreateOpen] = React.useState(false)
   const [editingWeek, setEditingWeek] = React.useState<Week | null>(null)
   const [deletingWeek, setDeletingWeek] = React.useState<Week | null>(null)
   const [isDeleting, setIsDeleting] = React.useState(false)
 
-  // Filter weeks based on admin preference
-  const visibleWeeks = isAdmin && showUnpublished
-    ? weeks
-    : weeks.filter(w => w.published)
+  // Show all weeks
+  const visibleWeeks = weeks
 
   // Separate numbered and unnumbered weeks
   const numberedWeeks = visibleWeeks.filter(w => w.number !== null)
@@ -88,20 +83,7 @@ export function WeeksListContent({ weeks, demoCountMap, isAdmin }: WeeksListCont
       {/* Admin Toolbar */}
       {isAdmin && (
         <div className="mb-6 p-4 bg-muted/50 rounded-lg border border-dashed border-primary/50">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Switch
-                  id="show-unpublished"
-                  checked={showUnpublished}
-                  onCheckedChange={setShowUnpublished}
-                />
-                <Label htmlFor="show-unpublished" className="text-sm font-medium">
-                  Show Unpublished
-                </Label>
-              </div>
-            </div>
-
+          <div className="flex flex-wrap items-center justify-end gap-4">
             <Button size="sm" onClick={() => setIsCreateOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
               Add Week
@@ -132,7 +114,7 @@ export function WeeksListContent({ weeks, demoCountMap, isAdmin }: WeeksListCont
               {weeksByLevel?.[level]?.map((week) => (
                 <div key={week.id} className="relative group">
                   <Link href={`/weeks/${week.number ?? week.id}`}>
-                    <Card className={`h-full hover:shadow-md transition-all hover:border-primary/50 ${!week.published ? 'opacity-60 border-dashed' : ''}`}>
+                    <Card className="h-full hover:shadow-md transition-all hover:border-primary/50">
                       <CardHeader className="pb-3">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
@@ -141,9 +123,6 @@ export function WeeksListContent({ weeks, demoCountMap, isAdmin }: WeeksListCont
                             >
                               Week {week.number}
                             </Badge>
-                            {!week.published && (
-                              <EyeOff className="h-4 w-4 text-muted-foreground" />
-                            )}
                           </div>
                           <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                         </div>
@@ -223,16 +202,13 @@ export function WeeksListContent({ weeks, demoCountMap, isAdmin }: WeeksListCont
               {unnumberedWeeks.map((week) => (
                 <div key={week.id} className="relative group">
                   <Link href={`/weeks/${week.id}`}>
-                    <Card className={`h-full hover:shadow-md transition-all hover:border-primary/50 ${!week.published ? 'opacity-60 border-dashed' : ''}`}>
+                    <Card className="h-full hover:shadow-md transition-all hover:border-primary/50">
                       <CardHeader className="pb-3">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <Badge variant="outline">
                               Unnumbered
                             </Badge>
-                            {!week.published && (
-                              <EyeOff className="h-4 w-4 text-muted-foreground" />
-                            )}
                           </div>
                           <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                         </div>

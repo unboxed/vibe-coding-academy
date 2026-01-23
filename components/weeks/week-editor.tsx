@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
 import {
   Dialog,
   DialogContent,
@@ -37,7 +36,6 @@ export function WeekEditor({ week, open, onOpenChange, onSuccess, existingWeekNu
   const [number, setNumber] = React.useState<number | null>(week?.number ?? null)
   const [title, setTitle] = React.useState(week?.title || '')
   const [level, setLevel] = React.useState(week?.level || 1)
-  const [published, setPublished] = React.useState(week?.published || false)
   const [feedbackUrl, setFeedbackUrl] = React.useState(week?.feedback_url || '')
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
@@ -53,14 +51,12 @@ export function WeekEditor({ week, open, onOpenChange, onSuccess, existingWeekNu
         setNumber(week.number)
         setTitle(week.title)
         setLevel(week.level)
-        setPublished(week.published)
         setFeedbackUrl(week.feedback_url || '')
       } else {
         // Start with no number assigned (optional tag)
         setNumber(null)
         setTitle('')
         setLevel(1)
-        setPublished(false)
         setFeedbackUrl('')
       }
       setError(null)
@@ -80,7 +76,7 @@ export function WeekEditor({ week, open, onOpenChange, onSuccess, existingWeekNu
           number,
           title: title.trim(),
           level,
-          published,
+          published: true,
           feedback_url: feedbackUrl.trim() || null,
         })
       } else {
@@ -88,7 +84,7 @@ export function WeekEditor({ week, open, onOpenChange, onSuccess, existingWeekNu
           number,
           title: title.trim(),
           level,
-          published,
+          published: true,
           feedback_url: feedbackUrl.trim() || undefined,
         })
       }
@@ -194,15 +190,6 @@ export function WeekEditor({ week, open, onOpenChange, onSuccess, existingWeekNu
               onChange={(e) => setFeedbackUrl(e.target.value)}
               placeholder="https://forms.google.com/..."
             />
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Switch
-              id="published"
-              checked={published}
-              onCheckedChange={setPublished}
-            />
-            <Label htmlFor="published">Published</Label>
           </div>
 
           {error && (

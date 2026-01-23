@@ -15,8 +15,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { Plus, Pencil, Trash2, Eye, EyeOff, GripVertical } from 'lucide-react'
-import { updateWeek, deleteSection } from '@/app/actions/admin'
+import { Plus, Pencil, Trash2, GripVertical } from 'lucide-react'
+import { deleteSection } from '@/app/actions/admin'
 import { WeekSectionEditor } from './week-section-editor'
 import type { Week, WeekSection } from '@/types/database'
 
@@ -34,25 +34,10 @@ export function WeekAdminToolbar({
   onEditModeChange,
 }: WeekAdminToolbarProps) {
   const router = useRouter()
-  const [published, setPublished] = React.useState(week.published)
-  const [isUpdating, setIsUpdating] = React.useState(false)
   const [isAddSectionOpen, setIsAddSectionOpen] = React.useState(false)
   const [editingSection, setEditingSection] = React.useState<WeekSection | null>(null)
   const [deletingSection, setDeletingSection] = React.useState<WeekSection | null>(null)
   const [isDeleting, setIsDeleting] = React.useState(false)
-
-  const handlePublishToggle = async (checked: boolean) => {
-    setIsUpdating(true)
-    try {
-      await updateWeek(week.id, { published: checked })
-      setPublished(checked)
-      router.refresh()
-    } catch (err) {
-      console.error('Failed to update published status:', err)
-    } finally {
-      setIsUpdating(false)
-    }
-  }
 
   const handleDeleteSection = async () => {
     if (!deletingSection) return
@@ -81,37 +66,15 @@ export function WeekAdminToolbar({
     <>
       <div className="mb-6 p-4 bg-muted/50 rounded-lg border border-dashed border-primary/50">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Switch
-                id="edit-mode"
-                checked={isEditMode}
-                onCheckedChange={onEditModeChange}
-              />
-              <Label htmlFor="edit-mode" className="text-sm font-medium">
-                Edit Mode
-              </Label>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Switch
-                id="published"
-                checked={published}
-                onCheckedChange={handlePublishToggle}
-                disabled={isUpdating}
-              />
-              <Label htmlFor="published" className="text-sm font-medium flex items-center gap-1">
-                {published ? (
-                  <>
-                    <Eye className="h-4 w-4" /> Published
-                  </>
-                ) : (
-                  <>
-                    <EyeOff className="h-4 w-4" /> Draft
-                  </>
-                )}
-              </Label>
-            </div>
+          <div className="flex items-center gap-2">
+            <Switch
+              id="edit-mode"
+              checked={isEditMode}
+              onCheckedChange={onEditModeChange}
+            />
+            <Label htmlFor="edit-mode" className="text-sm font-medium">
+              Edit Mode
+            </Label>
           </div>
 
           <Button size="sm" onClick={() => setIsAddSectionOpen(true)}>

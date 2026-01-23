@@ -151,6 +151,25 @@ export async function createWeek(data: {
     throw new Error(error.message)
   }
 
+  // Auto-create a Demos section for the new week
+  if (week) {
+    const weekData = week as { id: string }
+    const { error: sectionError } = await supabase
+      .from('week_sections')
+      .insert({
+        week_id: weekData.id,
+        slug: 'demos',
+        title: 'Demos',
+        sort_order: 999,
+        is_system: false,
+      } as never)
+
+    if (sectionError) {
+      console.error('Create demos section error:', sectionError)
+      // Don't throw - week was created successfully, just log the section error
+    }
+  }
+
   revalidatePath('/weeks')
   return week
 }
