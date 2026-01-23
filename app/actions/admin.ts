@@ -122,7 +122,7 @@ export async function removeBadgeAward(awardId: string) {
 // ===================
 
 export async function createWeek(data: {
-  number: number
+  number: number | null
   title: string
   level: number
   published: boolean
@@ -156,7 +156,7 @@ export async function createWeek(data: {
 }
 
 export async function updateWeek(id: string, data: {
-  number?: number
+  number?: number | null
   title?: string
   level?: number
   published?: boolean
@@ -363,4 +363,65 @@ export async function deleteProjectFeedback(feedbackId: string) {
 
   revalidatePath('/badges')
   revalidatePath('/projects')
+}
+
+// ===================
+// Project Operations
+// ===================
+
+export async function reorderProjects(projectIds: string[]) {
+  await requireAdmin()
+  const supabase = await createAdminClient()
+
+  // Update sort_order for each project based on array position
+  for (let i = 0; i < projectIds.length; i++) {
+    const { error } = await supabase
+      .from('projects')
+      .update({ sort_order: i } as never)
+      .eq('id', projectIds[i])
+
+    if (error) {
+      console.error('Reorder projects error:', error)
+      throw new Error(error.message)
+    }
+  }
+
+  revalidatePath('/badges')
+}
+
+export async function awardBadgeToProject(data: { badge_id: string; project_id: string }) {
+  const profile = await requireAdmin()
+  const supabase = await createAdminClient()
+
+  const { error } = await supabase
+    .from('badge_awards')
+    .insert({
+      badge_id: data.badge_id,
+      project_id: data.project_id,
+      awarded_by: profile.id,
+    } as never)
+
+  if (error) {
+    console.error('Award badge to project error:', error)
+    throw new Error(error.message)
+  }
+
+  revalidatePath('/badges')
+}
+
+export async function removeBadgeFromProject(awardId: string) {
+  await requireAdmin()
+  const supabase = await createAdminClient()
+
+  const { error } = await supabase
+    .from('badge_awards')
+    .delete()
+    .eq('id', awardId)
+
+  if (error) {
+    console.error('Remove badge from project error:', error)
+    throw new Error(error.message)
+  }
+
+  revalidatePath('/badges')
 }

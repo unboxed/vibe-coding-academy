@@ -123,13 +123,7 @@ export function WeekSectionEditor({
                 onChange={(e) => setSlug(e.target.value)}
                 placeholder="section-slug"
                 required
-                disabled={section?.is_system}
               />
-              {section?.is_system && (
-                <p className="text-xs text-muted-foreground">
-                  System sections cannot have their slug changed
-                </p>
-              )}
             </div>
           </div>
 

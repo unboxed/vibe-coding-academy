@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Loader2 } from 'lucide-react'
+import { Loader2, X } from 'lucide-react'
 import { createWeek, updateWeek } from '@/app/actions/admin'
 import type { Week } from '@/types/database'
 
@@ -34,7 +34,7 @@ interface WeekEditorProps {
 
 export function WeekEditor({ week, open, onOpenChange, onSuccess, existingWeekNumbers = [] }: WeekEditorProps) {
   const router = useRouter()
-  const [number, setNumber] = React.useState(week?.number || 1)
+  const [number, setNumber] = React.useState<number | null>(week?.number ?? null)
   const [title, setTitle] = React.useState(week?.title || '')
   const [level, setLevel] = React.useState(week?.level || 1)
   const [published, setPublished] = React.useState(week?.published || false)
@@ -56,9 +56,8 @@ export function WeekEditor({ week, open, onOpenChange, onSuccess, existingWeekNu
         setPublished(week.published)
         setFeedbackUrl(week.feedback_url || '')
       } else {
-        // Find first available number
-        const availableNumbers = allNumbers.filter(n => !existingWeekNumbers.includes(n))
-        setNumber(availableNumbers[0] || 1)
+        // Start with no number assigned (optional tag)
+        setNumber(null)
         setTitle('')
         setLevel(1)
         setPublished(false)
@@ -66,7 +65,7 @@ export function WeekEditor({ week, open, onOpenChange, onSuccess, existingWeekNu
       }
       setError(null)
     }
-  }, [open, week, existingWeekNumbers, isEditing])
+  }, [open, week, isEditing])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -78,6 +77,7 @@ export function WeekEditor({ week, open, onOpenChange, onSuccess, existingWeekNu
     try {
       if (isEditing && week) {
         await updateWeek(week.id, {
+          number,
           title: title.trim(),
           level,
           published,
@@ -113,36 +113,47 @@ export function WeekEditor({ week, open, onOpenChange, onSuccess, existingWeekNu
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="number">Week Number *</Label>
-              <Select
-                value={number.toString()}
-                onValueChange={(value) => setNumber(parseInt(value))}
-                disabled={isEditing}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select week" />
-                </SelectTrigger>
-                <SelectContent>
-                  {allNumbers.map((n) => {
-                    const exists = existingWeekNumbers.includes(n)
-                    const isCurrent = isEditing && week?.number === n
-                    return (
-                      <SelectItem
-                        key={n}
-                        value={n.toString()}
-                        disabled={exists && !isCurrent}
-                      >
-                        Week {n}{exists && !isCurrent ? ' (exists)' : ''}
-                      </SelectItem>
-                    )
-                  })}
-                </SelectContent>
-              </Select>
-              {isEditing && (
-                <p className="text-xs text-muted-foreground">
-                  Week number cannot be changed
-                </p>
-              )}
+              <Label htmlFor="number">Week Number</Label>
+              <div className="flex gap-2">
+                <Select
+                  value={number?.toString() || 'none'}
+                  onValueChange={(value) => setNumber(value === 'none' ? null : parseInt(value))}
+                >
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="No number" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No number</SelectItem>
+                    {allNumbers.map((n) => {
+                      const exists = existingWeekNumbers.includes(n)
+                      const isCurrent = week?.number === n
+                      return (
+                        <SelectItem
+                          key={n}
+                          value={n.toString()}
+                          disabled={exists && !isCurrent}
+                        >
+                          Week {n}{exists && !isCurrent ? ' (taken)' : ''}
+                        </SelectItem>
+                      )
+                    })}
+                  </SelectContent>
+                </Select>
+                {number !== null && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setNumber(null)}
+                    title="Clear number"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Optional - assign a week number as a tag
+              </p>
             </div>
 
             <div className="space-y-2">

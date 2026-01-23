@@ -22,7 +22,7 @@ import { Plus } from "lucide-react"
 
 interface SubmitDemoButtonProps {
   weekId: string
-  weekNumber: number
+  weekNumber: number | null
 }
 
 export function SubmitDemoButton({ weekId, weekNumber }: SubmitDemoButtonProps) {
@@ -90,7 +90,7 @@ export function SubmitDemoButton({ weekId, weekNumber }: SubmitDemoButtonProps) 
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Submit Demo for Week {weekNumber}</DialogTitle>
+          <DialogTitle>Submit Demo{weekNumber !== null ? ` for Week ${weekNumber}` : ''}</DialogTitle>
           <DialogDescription>
             Share your progress and get feedback from the community.
           </DialogDescription>

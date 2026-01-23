@@ -17,7 +17,7 @@ export interface Profile {
 
 export interface Week {
   id: string
-  number: number
+  number: number | null
   title: string
   level: number
   overview: string | null
@@ -69,6 +69,7 @@ export interface Project {
   github_url: string | null
   tech_stack: string[]
   status: ProjectStatus
+  sort_order: number
   created_at: string
   updated_at: string
   // Joined data
@@ -114,6 +115,7 @@ export interface BadgeAwardRow {
   id: string
   badge_id: string
   user_id: string
+  project_id: string | null
   demo_id: string | null
   awarded_by: string
   created_at: string
@@ -123,6 +125,7 @@ export interface BadgeAwardRow {
 export interface BadgeAward extends BadgeAwardRow {
   badge?: Badge
   profile?: Profile
+  project?: Project
   awarded_by_profile?: Profile
   demo?: Demo
 }
@@ -180,7 +183,7 @@ interface ProfileRow {
 
 interface WeekRow {
   id: string
-  number: number
+  number: number | null
   title: string
   level: number
   overview: string | null
@@ -219,6 +222,7 @@ interface ProjectRow {
   github_url: string | null
   tech_stack: string[]
   status: ProjectStatus
+  sort_order: number
   created_at: string
   updated_at: string
 }

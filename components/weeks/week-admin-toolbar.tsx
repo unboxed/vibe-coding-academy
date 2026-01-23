@@ -139,14 +139,12 @@ export function WeekAdminToolbar({
                     >
                       <Pencil className="h-3 w-3" />
                     </button>
-                    {!section.is_system && (
-                      <button
-                        onClick={() => setDeletingSection(section)}
-                        className="hover:bg-destructive/10 hover:text-destructive rounded p-0.5"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </button>
-                    )}
+                    <button
+                      onClick={() => setDeletingSection(section)}
+                      className="hover:bg-destructive/10 hover:text-destructive rounded p-0.5"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
                   </div>
                 ))}
             </div>
