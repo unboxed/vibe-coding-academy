@@ -6,9 +6,10 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { BadgeAdminPanel, RemoveBadgeButton } from "@/components/badges/badge-admin-panel"
+import { ProjectsTable } from "@/components/badges/projects-table"
 import { getInitials } from "@/lib/utils"
 import { Trophy, Award, Star, FolderKanban } from "lucide-react"
-import type { Badge as BadgeType, BadgeAward, Profile, Project } from "@/types/database"
+import type { Badge as BadgeType, BadgeAward, Profile, Project, ProjectFeedback } from "@/types/database"
 
 export const revalidate = 60
 
@@ -47,7 +48,7 @@ export default async function BadgesPage() {
 
   const badgeAwards = badgeAwardsData as BadgeAward[] | null
 
-  // Get all projects with their owners and badge counts
+  // Get all projects with their owners
   const { data: projectsData } = await supabase
     .from("projects")
     .select(`
@@ -56,12 +57,25 @@ export default async function BadgesPage() {
     `)
     .order("title")
 
-  // Add badge info to projects
+  // Get all project feedback with instructor info
+  const { data: feedbackData } = await supabase
+    .from("project_feedback")
+    .select(`
+      *,
+      instructor:profiles(id, name, avatar_url)
+    `)
+    .order("created_at", { ascending: false })
+
+  const projectFeedback = feedbackData as (ProjectFeedback & { instructor: Profile })[] | null
+
+  // Add badge info and feedback to projects
   const projectsWithBadges = (projectsData || []).map((project: Project & { profile: Profile }) => {
     const ownerBadges = badgeAwards?.filter(a => a.user_id === project.user_id) || []
+    const feedback = projectFeedback?.filter(f => f.project_id === project.id) || []
     return {
       ...project,
       ownerBadges,
+      feedback,
     }
   })
 
@@ -253,66 +267,11 @@ export default async function BadgesPage() {
             <CardHeader>
               <CardTitle>All Projects</CardTitle>
               <CardDescription>
-                Projects built by participants during the programme
+                Projects built by participants during the programme. Click column headers to sort.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {projectsWithBadges.length > 0 ? (
-                <div className="space-y-4">
-                  {projectsWithBadges.map((project) => (
-                    <Link
-                      key={project.id}
-                      href={`/projects/${project.id}`}
-                    >
-                      <div className="flex items-center gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors border">
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate">{project.title}</p>
-                          {project.description && (
-                            <p className="text-sm text-muted-foreground line-clamp-1">
-                              {project.description}
-                            </p>
-                          )}
-                          <div className="flex items-center gap-2 mt-2">
-                            <Avatar className="h-6 w-6">
-                              <AvatarImage
-                                src={project.profile?.avatar_url || ""}
-                                alt={project.profile?.name || ""}
-                              />
-                              <AvatarFallback className="text-xs">
-                                {getInitials(project.profile?.name || "?")}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span className="text-sm text-muted-foreground">
-                              {project.profile?.name}
-                            </span>
-                            {project.ownerBadges.length > 0 && (
-                              <div className="flex gap-1">
-                                {project.ownerBadges.slice(0, 3).map((award: BadgeAward) => (
-                                  <div
-                                    key={award.id}
-                                    className="w-4 h-4 rounded-full"
-                                    style={{ backgroundColor: award.badge?.color }}
-                                    title={award.badge?.name}
-                                  />
-                                ))}
-                                {project.ownerBadges.length > 3 && (
-                                  <span className="text-xs text-muted-foreground">
-                                    +{project.ownerBadges.length - 3}
-                                  </span>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-center text-muted-foreground py-8">
-                  No projects yet.
-                </p>
-              )}
+              <ProjectsTable projects={projectsWithBadges} isAdmin={isAdmin} />
             </CardContent>
           </Card>
         </TabsContent>

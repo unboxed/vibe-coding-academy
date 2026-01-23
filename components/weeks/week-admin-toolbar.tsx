@@ -16,7 +16,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Plus, Pencil, Trash2, Eye, EyeOff, GripVertical } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { updateWeek, deleteSection } from '@/app/actions/admin'
 import { WeekSectionEditor } from './week-section-editor'
 import type { Week, WeekSection } from '@/types/database'
 
@@ -44,13 +44,7 @@ export function WeekAdminToolbar({
   const handlePublishToggle = async (checked: boolean) => {
     setIsUpdating(true)
     try {
-      const supabase = createClient()
-      const { error } = await supabase
-        .from('weeks')
-        .update({ published: checked } as never)
-        .eq('id', week.id)
-
-      if (error) throw error
+      await updateWeek(week.id, { published: checked })
       setPublished(checked)
       router.refresh()
     } catch (err) {
@@ -65,13 +59,7 @@ export function WeekAdminToolbar({
 
     setIsDeleting(true)
     try {
-      const supabase = createClient()
-      const { error } = await supabase
-        .from('week_sections')
-        .delete()
-        .eq('id', deletingSection.id)
-
-      if (error) throw error
+      await deleteSection(deletingSection.id)
       router.refresh()
     } catch (err) {
       console.error('Failed to delete section:', err)

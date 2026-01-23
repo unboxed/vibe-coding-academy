@@ -127,6 +127,25 @@ export interface BadgeAward extends BadgeAwardRow {
   demo?: Demo
 }
 
+// Project feedback from instructors
+export interface ProjectFeedback {
+  id: string
+  project_id: string
+  instructor_id: string
+  content: string
+  created_at: string
+  updated_at: string
+  // Joined data
+  instructor?: Profile
+}
+
+// Project with all related data for the projects table view
+export interface ProjectWithDetails extends Project {
+  profile: Profile
+  badges: BadgeAward[]
+  feedback: ProjectFeedback[]
+}
+
 // Extended types for views/queries
 export interface ProfileWithBadges extends Profile {
   badges: BadgeAward[]
@@ -232,6 +251,15 @@ interface BadgeRow {
   created_at: string
 }
 
+interface ProjectFeedbackRow {
+  id: string
+  project_id: string
+  instructor_id: string
+  content: string
+  created_at: string
+  updated_at: string
+}
+
 // Database response types
 export type Database = {
   public: {
@@ -282,6 +310,12 @@ export type Database = {
         Row: BadgeAwardRow
         Insert: Omit<BadgeAwardRow, "id" | "created_at">
         Update: Partial<Omit<BadgeAwardRow, "id" | "created_at">>
+        Relationships: []
+      }
+      project_feedback: {
+        Row: ProjectFeedbackRow
+        Insert: Omit<ProjectFeedbackRow, "id" | "created_at" | "updated_at">
+        Update: Partial<Omit<ProjectFeedbackRow, "id" | "project_id" | "created_at" | "updated_at">>
         Relationships: []
       }
     }

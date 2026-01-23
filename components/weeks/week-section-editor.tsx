@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Loader2 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { createSection, updateSection } from '@/app/actions/admin'
 import type { WeekSection } from '@/types/database'
 
 interface WeekSectionEditorProps {
@@ -71,37 +71,26 @@ export function WeekSectionEditor({
     setError(null)
 
     try {
-      const supabase = createClient()
-
       if (isEditing && section) {
-        const { error: updateError } = await supabase
-          .from('week_sections')
-          .update({
-            title: title.trim(),
-            slug: slug.trim(),
-            content: content.trim() || null,
-          } as never)
-          .eq('id', section.id)
-
-        if (updateError) throw updateError
+        await updateSection(section.id, {
+          title: title.trim(),
+          slug: slug.trim(),
+          content: content.trim() || null,
+        })
       } else {
-        const { error: insertError } = await supabase
-          .from('week_sections')
-          .insert({
-            week_id: weekId,
-            title: title.trim(),
-            slug: slug.trim(),
-            content: content.trim() || null,
-            sort_order: nextSortOrder,
-            is_system: false,
-          } as never)
-
-        if (insertError) throw insertError
+        await createSection({
+          week_id: weekId,
+          title: title.trim(),
+          slug: slug.trim(),
+          content: content.trim() || undefined,
+          sort_order: nextSortOrder,
+        })
       }
 
       onSuccess()
       onOpenChange(false)
     } catch (err) {
+      console.error('Section save error:', err)
       setError(err instanceof Error ? err.message : 'Failed to save section')
     } finally {
       setIsSubmitting(false)

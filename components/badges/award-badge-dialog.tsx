@@ -19,8 +19,7 @@ import {
 } from '@/components/ui/select'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Loader2, Award } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
-import { useUser } from '@clerk/nextjs'
+import { awardBadge } from '@/app/actions/admin'
 import { getInitials } from '@/lib/utils'
 import type { Badge, Profile } from '@/types/database'
 
@@ -39,7 +38,6 @@ export function AwardBadgeDialog({
   onOpenChange,
   onSuccess,
 }: AwardBadgeDialogProps) {
-  const { user } = useUser()
   const [selectedBadge, setSelectedBadge] = React.useState<string>('')
   const [selectedUser, setSelectedUser] = React.useState<string>('')
   const [isSubmitting, setIsSubmitting] = React.useState(false)
@@ -55,28 +53,21 @@ export function AwardBadgeDialog({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!selectedBadge || !selectedUser || !user) return
+    if (!selectedBadge || !selectedUser) return
 
     setIsSubmitting(true)
     setError(null)
 
     try {
-      const supabase = createClient()
-
-      const { error: insertError } = await supabase
-        .from('badge_awards')
-        .insert({
-          badge_id: selectedBadge,
-          user_id: selectedUser,
-          awarded_by: user.id,
-          demo_id: null,
-        } as never)
-
-      if (insertError) throw insertError
+      await awardBadge({
+        badge_id: selectedBadge,
+        user_id: selectedUser,
+      })
 
       onSuccess()
       onOpenChange(false)
     } catch (err) {
+      console.error('Award badge error:', err)
       setError(err instanceof Error ? err.message : 'Failed to award badge')
     } finally {
       setIsSubmitting(false)

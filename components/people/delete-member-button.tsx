@@ -15,7 +15,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { Trash2, Loader2 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { deleteProfile } from '@/app/actions/admin'
 
 interface DeleteMemberButtonProps {
   userId: string
@@ -34,26 +34,12 @@ export function DeleteMemberButton({ userId, userName, disabled }: DeleteMemberB
     setError(null)
 
     try {
-      const supabase = createClient()
-      const { error: deleteError } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', userId)
-
-      if (deleteError) throw deleteError
-
+      await deleteProfile(userId)
       setOpen(false)
       router.refresh()
     } catch (err: unknown) {
       console.error('Delete member error:', err)
-      const supabaseError = err as { message?: string; code?: string }
-      if (supabaseError.code === '42501') {
-        setError('Permission denied. Only admins can delete members.')
-      } else if (supabaseError.message) {
-        setError(supabaseError.message)
-      } else {
-        setError('Failed to delete member.')
-      }
+      setError(err instanceof Error ? err.message : 'Failed to delete member.')
     } finally {
       setIsDeleting(false)
     }

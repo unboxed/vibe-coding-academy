@@ -15,10 +15,10 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Award, Plus, Pencil, Trash2, Gift, X } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { deleteBadge, removeBadgeAward } from '@/app/actions/admin'
 import { BadgeEditor } from './badge-editor'
 import { AwardBadgeDialog } from './award-badge-dialog'
-import type { Badge, BadgeAward, Profile } from '@/types/database'
+import type { Badge, Profile } from '@/types/database'
 
 interface BadgeAdminPanelProps {
   badges: Badge[]
@@ -38,13 +38,7 @@ export function BadgeAdminPanel({ badges, profiles }: BadgeAdminPanelProps) {
 
     setIsDeleting(true)
     try {
-      const supabase = createClient()
-      const { error } = await supabase
-        .from('badges')
-        .delete()
-        .eq('id', deletingBadge.id)
-
-      if (error) throw error
+      await deleteBadge(deletingBadge.id)
       router.refresh()
     } catch (err) {
       console.error('Failed to delete badge:', err)
@@ -172,13 +166,7 @@ export function RemoveBadgeButton({ awardId }: RemoveBadgeButtonProps) {
   const handleRemove = async () => {
     setIsRemoving(true)
     try {
-      const supabase = createClient()
-      const { error } = await supabase
-        .from('badge_awards')
-        .delete()
-        .eq('id', awardId)
-
-      if (error) throw error
+      await removeBadgeAward(awardId)
       router.refresh()
     } catch (err) {
       console.error('Failed to remove badge:', err)

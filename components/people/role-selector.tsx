@@ -1,7 +1,6 @@
 'use client'
 
 import * as React from 'react'
-import { createClient } from '@/lib/supabase/client'
 import {
   Select,
   SelectContent,
@@ -10,6 +9,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Loader2 } from 'lucide-react'
+import { updateProfileRole } from '@/app/actions/admin'
 import type { UserRole } from '@/types/database'
 
 interface RoleSelectorProps {
@@ -32,13 +32,7 @@ export function RoleSelector({ userId, currentRole, disabled }: RoleSelectorProp
 
     setIsUpdating(true)
     try {
-      const supabase = createClient()
-      const { error } = await supabase
-        .from('profiles')
-        .update({ role: newRole } as never)
-        .eq('id', userId)
-
-      if (error) throw error
+      await updateProfileRole(userId, newRole)
       setRole(newRole)
     } catch (err) {
       console.error('Failed to update role:', err)

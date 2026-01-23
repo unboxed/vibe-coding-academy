@@ -19,7 +19,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { ArrowRight, CheckCircle, Plus, Pencil, Trash2, EyeOff } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { deleteWeek } from '@/app/actions/admin'
 import { WeekEditor } from './week-editor'
 import { getLevelForWeek, getLevelName } from '@/lib/utils'
 import type { Week } from '@/types/database'
@@ -65,13 +65,7 @@ export function WeeksListContent({ weeks, demoCountMap, isAdmin }: WeeksListCont
 
     setIsDeleting(true)
     try {
-      const supabase = createClient()
-      const { error } = await supabase
-        .from('weeks')
-        .delete()
-        .eq('id', deletingWeek.id)
-
-      if (error) throw error
+      await deleteWeek(deletingWeek.id)
       router.refresh()
     } catch (err) {
       console.error('Failed to delete week:', err)

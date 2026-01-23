@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Loader2 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { createWeek, updateWeek } from '@/app/actions/admin'
 import type { Week } from '@/types/database'
 
 interface WeekEditorProps {
@@ -44,25 +44,29 @@ export function WeekEditor({ week, open, onOpenChange, onSuccess, existingWeekNu
 
   const isEditing = !!week
 
-  // Available week numbers (1-10, excluding already used ones)
-  const availableNumbers = React.useMemo(() => {
-    const all = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-    if (isEditing) {
-      return all // When editing, show all numbers
-    }
-    return all.filter(n => !existingWeekNumbers.includes(n))
-  }, [existingWeekNumbers, isEditing])
+  // All week numbers 1-10
+  const allNumbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
   React.useEffect(() => {
     if (open) {
-      setNumber(week?.number || (availableNumbers[0] || 1))
-      setTitle(week?.title || '')
-      setLevel(week?.level || 1)
-      setPublished(week?.published || false)
-      setFeedbackUrl(week?.feedback_url || '')
+      if (isEditing && week) {
+        setNumber(week.number)
+        setTitle(week.title)
+        setLevel(week.level)
+        setPublished(week.published)
+        setFeedbackUrl(week.feedback_url || '')
+      } else {
+        // Find first available number
+        const availableNumbers = allNumbers.filter(n => !existingWeekNumbers.includes(n))
+        setNumber(availableNumbers[0] || 1)
+        setTitle('')
+        setLevel(1)
+        setPublished(false)
+        setFeedbackUrl('')
+      }
       setError(null)
     }
-  }, [open, week, availableNumbers])
+  }, [open, week, existingWeekNumbers, isEditing])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -72,50 +76,29 @@ export function WeekEditor({ week, open, onOpenChange, onSuccess, existingWeekNu
     setError(null)
 
     try {
-      const supabase = createClient()
-
       if (isEditing && week) {
-        const { error: updateError } = await supabase
-          .from('weeks')
-          .update({
-            number,
-            title: title.trim(),
-            level,
-            published,
-            feedback_url: feedbackUrl.trim() || null,
-          } as never)
-          .eq('id', week.id)
-
-        if (updateError) throw updateError
+        await updateWeek(week.id, {
+          title: title.trim(),
+          level,
+          published,
+          feedback_url: feedbackUrl.trim() || null,
+        })
       } else {
-        const { error: insertError } = await supabase
-          .from('weeks')
-          .insert({
-            number,
-            title: title.trim(),
-            level,
-            published,
-            feedback_url: feedbackUrl.trim() || null,
-          } as never)
-
-        if (insertError) throw insertError
+        await createWeek({
+          number,
+          title: title.trim(),
+          level,
+          published,
+          feedback_url: feedbackUrl.trim() || undefined,
+        })
       }
 
       onSuccess()
       onOpenChange(false)
       router.refresh()
-    } catch (err: unknown) {
+    } catch (err) {
       console.error('Week save error:', err)
-      const supabaseError = err as { message?: string; code?: string }
-      if (supabaseError.code === '23505') {
-        setError('A week with this number already exists.')
-      } else if (supabaseError.code === '42501') {
-        setError('Permission denied. Only admins can create/edit weeks.')
-      } else if (supabaseError.message) {
-        setError(supabaseError.message)
-      } else {
-        setError('Failed to save week.')
-      }
+      setError(err instanceof Error ? err.message : 'Failed to save week')
     } finally {
       setIsSubmitting(false)
     }
@@ -140,11 +123,19 @@ export function WeekEditor({ week, open, onOpenChange, onSuccess, existingWeekNu
                   <SelectValue placeholder="Select week" />
                 </SelectTrigger>
                 <SelectContent>
-                  {(isEditing ? [week?.number] : availableNumbers).map((n) => (
-                    <SelectItem key={n} value={n!.toString()}>
-                      Week {n}
-                    </SelectItem>
-                  ))}
+                  {allNumbers.map((n) => {
+                    const exists = existingWeekNumbers.includes(n)
+                    const isCurrent = isEditing && week?.number === n
+                    return (
+                      <SelectItem
+                        key={n}
+                        value={n.toString()}
+                        disabled={exists && !isCurrent}
+                      >
+                        Week {n}{exists && !isCurrent ? ' (exists)' : ''}
+                      </SelectItem>
+                    )
+                  })}
                 </SelectContent>
               </Select>
               {isEditing && (

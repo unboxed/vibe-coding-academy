@@ -13,7 +13,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { Loader2 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { createBadge, updateBadge } from '@/app/actions/admin'
 import type { Badge } from '@/types/database'
 
 interface BadgeEditorProps {
@@ -60,44 +60,25 @@ export function BadgeEditor({ badge, open, onOpenChange, onSuccess }: BadgeEdito
     setError(null)
 
     try {
-      const supabase = createClient()
-
       if (isEditing && badge) {
-        const { error: updateError } = await supabase
-          .from('badges')
-          .update({
-            name: name.trim(),
-            description: description.trim() || null,
-            color,
-          } as never)
-          .eq('id', badge.id)
-
-        if (updateError) throw updateError
+        await updateBadge(badge.id, {
+          name: name.trim(),
+          description: description.trim() || undefined,
+          color,
+        })
       } else {
-        const { error: insertError } = await supabase
-          .from('badges')
-          .insert({
-            name: name.trim(),
-            description: description.trim() || null,
-            color,
-          } as never)
-
-        if (insertError) throw insertError
+        await createBadge({
+          name: name.trim(),
+          description: description.trim() || undefined,
+          color,
+        })
       }
 
       onSuccess()
       onOpenChange(false)
-    } catch (err: unknown) {
+    } catch (err) {
       console.error('Badge save error:', err)
-      // Supabase errors have code, message, details, hint properties
-      const supabaseError = err as { message?: string; code?: string; hint?: string }
-      if (supabaseError.code === '42501') {
-        setError('Permission denied. Make sure you are logged in as an admin and the database migration has been run.')
-      } else if (supabaseError.message) {
-        setError(supabaseError.message)
-      } else {
-        setError('Failed to save badge. Check console for details.')
-      }
+      setError(err instanceof Error ? err.message : 'Failed to save badge')
     } finally {
       setIsSubmitting(false)
     }
