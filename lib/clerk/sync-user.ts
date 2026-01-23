@@ -1,6 +1,8 @@
 import { currentUser } from '@clerk/nextjs/server'
 import { createAdminClient } from '@/lib/supabase/server'
-import type { Profile } from '@/types/database'
+import type { Profile, Database } from '@/types/database'
+
+type ProfileInsert = Database['public']['Tables']['profiles']['Insert']
 
 export async function syncUserToSupabase(): Promise<Profile | null> {
   const user = await currentUser()
@@ -37,11 +39,11 @@ export async function syncUserToSupabase(): Promise<Profile | null> {
   }
 
   // Create new profile
-  const newProfile = {
+  const newProfile: ProfileInsert = {
     id: user.id,
     name: [user.firstName, user.lastName].filter(Boolean).join(' ') || email.split('@')[0] || 'User',
     email: email,
-    role: 'member' as const,
+    role: 'member',
     avatar_url: user.imageUrl || null,
     bio: null,
     github_url: null,
@@ -50,10 +52,9 @@ export async function syncUserToSupabase(): Promise<Profile | null> {
     repo_url: null,
   }
 
-  // @ts-ignore
   const { data, error } = await supabase
     .from('profiles')
-    .insert(newProfile)
+    .insert(newProfile as never)
     .select()
     .single()
 
