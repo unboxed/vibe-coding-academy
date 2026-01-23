@@ -1,17 +1,23 @@
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/server"
+import { getProfile } from "@/lib/clerk/sync-user"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { BadgeAdminPanel, RemoveBadgeButton } from "@/components/badges/badge-admin-panel"
 import { getInitials } from "@/lib/utils"
 import { Trophy, Award, Star } from "lucide-react"
-import type { Badge as BadgeType, BadgeAward } from "@/types/database"
+import type { Badge as BadgeType, BadgeAward, Profile } from "@/types/database"
 
 export const revalidate = 60
 
 export default async function BadgesPage() {
   const supabase = await createClient()
+
+  // Check if current user is admin
+  const currentProfile = await getProfile()
+  const isAdmin = currentProfile?.role === 'admin'
 
   // Get all badges
   const { data: badgesData } = await supabase
@@ -20,6 +26,14 @@ export default async function BadgesPage() {
     .order("name")
 
   const badges = badgesData as BadgeType[] | null
+
+  // Get all profiles for admin badge awarding
+  const { data: profilesData } = await supabase
+    .from("profiles")
+    .select("*")
+    .order("name")
+
+  const profiles = profilesData as Profile[] | null
 
   // Get all badge awards with details
   const { data: badgeAwardsData } = await supabase
@@ -85,6 +99,11 @@ export default async function BadgesPage() {
           Recognition for achievements during the programme
         </p>
       </div>
+
+      {/* Admin Badge Management Panel */}
+      {isAdmin && badges && profiles && (
+        <BadgeAdminPanel badges={badges} profiles={profiles} />
+      )}
 
       <Tabs defaultValue="leaderboard" className="space-y-6">
         <TabsList>
@@ -255,6 +274,7 @@ export default async function BadgesPage() {
                           {new Date(award.created_at).toLocaleDateString()}
                         </p>
                       </div>
+                      {isAdmin && <RemoveBadgeButton awardId={award.id} />}
                     </div>
                   ))}
                 </div>

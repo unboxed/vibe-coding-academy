@@ -1,4 +1,4 @@
-export type UserRole = "admin" | "facilitator" | "member"
+export type UserRole = "admin" | "member"
 
 export interface Profile {
   id: string
@@ -29,6 +29,22 @@ export interface Week {
   published: boolean
   created_at: string
   updated_at: string
+}
+
+export interface WeekSection {
+  id: string
+  week_id: string
+  slug: string
+  title: string
+  content: string | null
+  sort_order: number
+  is_system: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface WeekWithSections extends Week {
+  sections: WeekSection[]
 }
 
 export type ProjectStatus = "draft" | "in_progress" | "completed"
@@ -159,6 +175,18 @@ interface WeekRow {
   updated_at: string
 }
 
+interface WeekSectionRow {
+  id: string
+  week_id: string
+  slug: string
+  title: string
+  content: string | null
+  sort_order: number
+  is_system: boolean
+  created_at: string
+  updated_at: string
+}
+
 interface ProjectRow {
   id: string
   user_id: string
@@ -218,6 +246,12 @@ export type Database = {
         Row: WeekRow
         Insert: Omit<WeekRow, "id" | "created_at" | "updated_at">
         Update: Partial<Omit<WeekRow, "id" | "created_at" | "updated_at">>
+        Relationships: []
+      }
+      week_sections: {
+        Row: WeekSectionRow
+        Insert: Omit<WeekSectionRow, "id" | "created_at" | "updated_at">
+        Update: Partial<Omit<WeekSectionRow, "id" | "week_id" | "created_at" | "updated_at">>
         Relationships: []
       }
       projects: {

@@ -5,7 +5,7 @@ import { useRouter, useParams } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Loader2 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
-import { useProfile } from "@/hooks/use-profile"
+import { useAdmin } from "@/hooks/use-admin"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -46,7 +46,7 @@ export default function EditProjectPage() {
   const router = useRouter()
   const params = useParams()
   const projectId = params.id as string
-  const { user } = useProfile()
+  const { user, isAdmin } = useAdmin()
 
   const [isLoading, setIsLoading] = React.useState(true)
   const [isSubmitting, setIsSubmitting] = React.useState(false)
@@ -84,8 +84,8 @@ export default function EditProjectPage() {
         return
       }
 
-      // Check ownership
-      if (data.user_id !== user.id) {
+      // Check ownership or admin access
+      if (data.user_id !== user.id && !isAdmin) {
         router.push(`/projects/${projectId}`)
         return
       }
@@ -106,7 +106,7 @@ export default function EditProjectPage() {
     }
 
     loadProject()
-  }, [user, projectId, router])
+  }, [user, projectId, router, isAdmin])
 
   // Note: Auth redirect handled by middleware - no need for client-side redirect
 

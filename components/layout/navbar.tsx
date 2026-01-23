@@ -42,7 +42,8 @@ const navLinks = [
 
 export function Navbar({ user, profile, onSignOut, isLoading, authError }: NavbarProps) {
   const pathname = usePathname()
-  const isAdmin = profile?.role === "admin" || profile?.role === "facilitator"
+  // Admin check kept for potential future use but Admin link removed
+  const isAdmin = profile?.role === "admin"
 
   // Use profile for display, fall back to Clerk user data
   const displayName = profile?.name ||
@@ -77,19 +78,6 @@ export function Navbar({ user, profile, onSignOut, isLoading, authError }: Navba
                 {link.label}
               </Link>
             ))}
-            {isAdmin && (
-              <Link
-                href="/admin"
-                className={cn(
-                  "text-sm font-medium transition-colors hover:text-foreground/80",
-                  pathname.startsWith("/admin")
-                    ? "text-foreground"
-                    : "text-foreground/60"
-                )}
-              >
-                Admin
-              </Link>
-            )}
           </nav>
         </div>
 
