@@ -30,7 +30,10 @@ export function htmlToMarkdown(html: string): string {
   markdown = markdown.replace(/<em[^>]*>(.*?)<\/em>/gi, '*$1*')
   markdown = markdown.replace(/<i[^>]*>(.*?)<\/i>/gi, '*$1*')
 
-  // Handle paragraphs
+  // Handle empty paragraphs (blank lines) - convert to special marker first
+  markdown = markdown.replace(/<p[^>]*><\/p>/gi, '\n&blank;\n')
+
+  // Handle paragraphs with content
   markdown = markdown.replace(/<p[^>]*>(.*?)<\/p>/gi, '$1\n\n')
 
   // Handle line breaks
@@ -42,8 +45,11 @@ export function htmlToMarkdown(html: string): string {
   // Clean up HTML entities
   markdown = decodeHtml(markdown)
 
-  // Clean up extra whitespace
-  markdown = markdown.replace(/\n{3,}/g, '\n\n')
+  // Convert blank markers to actual blank lines
+  markdown = markdown.replace(/&blank;/g, '\n')
+
+  // Clean up excessive whitespace (more than 3 newlines become 2)
+  markdown = markdown.replace(/\n{4,}/g, '\n\n\n')
   markdown = markdown.trim()
 
   return markdown
@@ -140,22 +146,23 @@ export function markdownToHtml(markdown: string): string {
   html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>')
 
   // Handle paragraphs (lines not already wrapped in tags)
-  const lines = html.split('\n')
-  html = lines.map(line => {
-    const trimmed = line.trim()
-    if (!trimmed) return ''
+  // Split by double newlines to detect paragraph breaks
+  const paragraphs = html.split(/\n\n+/)
+  html = paragraphs.map(para => {
+    const trimmed = para.trim()
+    // Empty paragraph = blank line in editor
+    if (!trimmed) return '<p></p>'
     if (trimmed.startsWith('<')) return trimmed
     if (trimmed.startsWith('__CODEBLOCK_')) return trimmed
-    return `<p>${trimmed}</p>`
+    // Handle single line breaks within a paragraph
+    const withBreaks = trimmed.replace(/\n/g, '<br>')
+    return `<p>${withBreaks}</p>`
   }).join('')
 
   // Restore code blocks
   codeBlocks.forEach((block, index) => {
     html = html.replace(`__CODEBLOCK_${index}__`, block)
   })
-
-  // Clean up empty paragraphs
-  html = html.replace(/<p><\/p>/g, '')
 
   return html
 }
