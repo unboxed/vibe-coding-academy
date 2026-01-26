@@ -153,6 +153,16 @@ export function WeekContent({
         section.slug === 'prompts' ? (
           <ReactMarkdown
             components={{
+              a: ({ href, children }) => (
+                <a
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary underline hover:text-primary/80"
+                >
+                  {children}
+                </a>
+              ),
               code: ({ children, className }) => {
                 const isBlock = className?.includes('language-')
                 if (isBlock) {
@@ -181,7 +191,22 @@ export function WeekContent({
             {section.content}
           </ReactMarkdown>
         ) : (
-          <ReactMarkdown>{section.content}</ReactMarkdown>
+          <ReactMarkdown
+            components={{
+              a: ({ href, children }) => (
+                <a
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary underline hover:text-primary/80"
+                >
+                  {children}
+                </a>
+              ),
+            }}
+          >
+            {section.content}
+          </ReactMarkdown>
         )
       ) : (
         <p className="text-muted-foreground">

@@ -4,6 +4,7 @@ import * as React from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
+import Link from '@tiptap/extension-link'
 import {
   Bold,
   Italic,
@@ -14,7 +15,9 @@ import {
   Heading3,
   Undo,
   Redo,
-  Code
+  Code,
+  Link2,
+  Unlink
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -57,6 +60,16 @@ export function RichTextEditor({
       }),
       Placeholder.configure({
         placeholder,
+      }),
+      Link.configure({
+        openOnClick: false,
+        autolink: true,
+        linkOnPaste: true,
+        HTMLAttributes: {
+          class: 'text-primary underline hover:text-primary/80',
+          target: '_blank',
+          rel: 'noopener noreferrer',
+        },
       }),
     ],
     content: initialHtml,
@@ -111,6 +124,27 @@ export function RichTextEditor({
           tooltip="Inline Code"
         >
           <Code className="h-4 w-4" />
+        </ToolbarButton>
+
+        <ToolbarButton
+          onClick={() => {
+            const url = window.prompt('Enter URL:')
+            if (url) {
+              editor.chain().focus().setLink({ href: url }).run()
+            }
+          }}
+          isActive={editor.isActive('link')}
+          tooltip="Add Link"
+        >
+          <Link2 className="h-4 w-4" />
+        </ToolbarButton>
+
+        <ToolbarButton
+          onClick={() => editor.chain().focus().unsetLink().run()}
+          disabled={!editor.isActive('link')}
+          tooltip="Remove Link"
+        >
+          <Unlink className="h-4 w-4" />
         </ToolbarButton>
 
         <Separator orientation="vertical" className="h-6 mx-1" />

@@ -31,7 +31,7 @@ export function htmlToMarkdown(html: string): string {
   markdown = markdown.replace(/<i[^>]*>(.*?)<\/i>/gi, '*$1*')
 
   // Handle empty paragraphs (blank lines) - convert to special marker first
-  markdown = markdown.replace(/<p[^>]*><\/p>/gi, '\n&blank;\n')
+  markdown = markdown.replace(/<p[^>]*><\/p>/gi, '\n<!-- blank -->\n')
 
   // Handle paragraphs with content
   markdown = markdown.replace(/<p[^>]*>(.*?)<\/p>/gi, '$1\n\n')
@@ -45,11 +45,11 @@ export function htmlToMarkdown(html: string): string {
   // Clean up HTML entities
   markdown = decodeHtml(markdown)
 
-  // Convert blank markers to actual blank lines
-  markdown = markdown.replace(/&blank;/g, '\n')
+  // Convert blank markers to double newlines (paragraph break)
+  markdown = markdown.replace(/<!-- blank -->/g, '\n')
 
-  // Clean up excessive whitespace (more than 3 newlines become 2)
-  markdown = markdown.replace(/\n{4,}/g, '\n\n\n')
+  // Clean up excessive whitespace (allow up to 3 blank lines, collapse more)
+  markdown = markdown.replace(/\n{5,}/g, '\n\n\n\n')
   markdown = markdown.trim()
 
   return markdown
@@ -146,8 +146,8 @@ export function markdownToHtml(markdown: string): string {
   html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>')
 
   // Handle paragraphs (lines not already wrapped in tags)
-  // Split by double newlines to detect paragraph breaks
-  const paragraphs = html.split(/\n\n+/)
+  // Split by exactly double newlines to preserve blank lines
+  const paragraphs = html.split(/\n\n/)
   html = paragraphs.map(para => {
     const trimmed = para.trim()
     // Empty paragraph = blank line in editor
