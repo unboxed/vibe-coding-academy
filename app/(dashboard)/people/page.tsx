@@ -1,8 +1,11 @@
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/server"
+import { getProfile } from "@/lib/clerk/sync-user"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { RoleSelector } from "@/components/people/role-selector"
+import { DeleteMemberButton } from "@/components/people/delete-member-button"
 import { getInitials } from "@/lib/utils"
 import { Github, MessageSquare } from "lucide-react"
 import type { Profile } from "@/types/database"
@@ -11,6 +14,10 @@ export const revalidate = 60
 
 export default async function PeoplePage() {
   const supabase = await createClient()
+
+  // Check if current user is admin
+  const currentProfile = await getProfile()
+  const isAdmin = currentProfile?.role === 'admin'
 
   const { data: profilesData } = await supabase
     .from("profiles")
@@ -85,9 +92,25 @@ export default async function PeoplePage() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <Badge variant="secondary" className="text-xs">
-                        {profile.role}
-                      </Badge>
+                      {isAdmin ? (
+                        <>
+                          <RoleSelector
+                            userId={profile.id}
+                            currentRole={profile.role}
+                            disabled={profile.id === currentProfile?.id}
+                          />
+                          {profile.id !== currentProfile?.id && (
+                            <DeleteMemberButton
+                              userId={profile.id}
+                              userName={profile.name}
+                            />
+                          )}
+                        </>
+                      ) : (
+                        <Badge variant="secondary" className="text-xs">
+                          {profile.role}
+                        </Badge>
+                      )}
                       {badgeCountMap.get(profile.id) ? (
                         <Badge variant="outline" className="text-xs">
                           {badgeCountMap.get(profile.id)} badges

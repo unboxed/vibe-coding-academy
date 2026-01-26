@@ -3,6 +3,8 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Search, Menu, Loader2, AlertCircle } from "lucide-react"
+import { SignInButton } from "@clerk/nextjs"
+import type { UserResource } from "@clerk/types"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -23,7 +25,8 @@ import {
 } from "@/components/ui/tooltip"
 
 interface NavbarProps {
-  user: Profile | null
+  user: UserResource | null | undefined
+  profile: Profile | null
   onSignOut: () => void
   isLoading?: boolean
   authError?: string | null
@@ -37,9 +40,18 @@ const navLinks = [
   { href: "/badges", label: "Badges" },
 ]
 
-export function Navbar({ user, onSignOut, isLoading, authError }: NavbarProps) {
+export function Navbar({ user, profile, onSignOut, isLoading, authError }: NavbarProps) {
   const pathname = usePathname()
-  const isAdmin = user?.role === "admin" || user?.role === "facilitator"
+  // Admin check kept for potential future use but Admin link removed
+  const isAdmin = profile?.role === "admin"
+
+  // Use profile for display, fall back to Clerk user data
+  const displayName = profile?.name ||
+    (user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : null) ||
+    user?.emailAddresses?.[0]?.emailAddress?.split("@")[0] ||
+    "User"
+  const displayEmail = profile?.email || user?.emailAddresses?.[0]?.emailAddress || ""
+  const avatarUrl = profile?.avatar_url || user?.imageUrl || ""
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -66,19 +78,6 @@ export function Navbar({ user, onSignOut, isLoading, authError }: NavbarProps) {
                 {link.label}
               </Link>
             ))}
-            {isAdmin && (
-              <Link
-                href="/admin"
-                className={cn(
-                  "text-sm font-medium transition-colors hover:text-foreground/80",
-                  pathname.startsWith("/admin")
-                    ? "text-foreground"
-                    : "text-foreground/60"
-                )}
-              >
-                Admin
-              </Link>
-            )}
           </nav>
         </div>
 
@@ -114,8 +113,8 @@ export function Navbar({ user, onSignOut, isLoading, authError }: NavbarProps) {
                   className="relative h-9 w-9 rounded-full"
                 >
                   <Avatar className="h-9 w-9">
-                    <AvatarImage src={user.avatar_url || ""} alt={user.name} />
-                    <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+                    <AvatarImage src={avatarUrl} alt={displayName} />
+                    <AvatarFallback>{getInitials(displayName)}</AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
@@ -123,10 +122,10 @@ export function Navbar({ user, onSignOut, isLoading, authError }: NavbarProps) {
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">
-                      {user.name}
+                      {displayName}
                     </p>
                     <p className="text-xs leading-none text-muted-foreground">
-                      {user.email}
+                      {displayEmail}
                     </p>
                   </div>
                 </DropdownMenuLabel>
@@ -142,9 +141,9 @@ export function Navbar({ user, onSignOut, isLoading, authError }: NavbarProps) {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Link href="/login">
+            <SignInButton mode="modal">
               <Button>Sign In</Button>
-            </Link>
+            </SignInButton>
           )}
 
           <Button variant="ghost" size="icon" className="md:hidden">

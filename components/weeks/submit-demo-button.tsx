@@ -2,7 +2,8 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { useAuth } from "@/components/providers/auth-provider"
+import { SignInButton } from "@clerk/nextjs"
+import { useProfile } from "@/hooks/use-profile"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -21,11 +22,11 @@ import { Plus } from "lucide-react"
 
 interface SubmitDemoButtonProps {
   weekId: string
-  weekNumber: number
+  weekNumber: number | null
 }
 
 export function SubmitDemoButton({ weekId, weekNumber }: SubmitDemoButtonProps) {
-  const { user, profile } = useAuth()
+  const { user, profile } = useProfile()
   const router = useRouter()
   const supabase = createClient()
 
@@ -70,10 +71,12 @@ export function SubmitDemoButton({ weekId, weekNumber }: SubmitDemoButtonProps) 
 
   if (!user) {
     return (
-      <Button onClick={() => router.push("/login")} className="gap-2">
-        <Plus className="h-4 w-4" />
-        Submit Demo
-      </Button>
+      <SignInButton mode="modal">
+        <Button className="gap-2">
+          <Plus className="h-4 w-4" />
+          Submit Demo
+        </Button>
+      </SignInButton>
     )
   }
 
@@ -87,7 +90,7 @@ export function SubmitDemoButton({ weekId, weekNumber }: SubmitDemoButtonProps) 
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Submit Demo for Week {weekNumber}</DialogTitle>
+          <DialogTitle>Submit Demo{weekNumber !== null ? ` for Week ${weekNumber}` : ''}</DialogTitle>
           <DialogDescription>
             Share your progress and get feedback from the community.
           </DialogDescription>

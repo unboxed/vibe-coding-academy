@@ -5,7 +5,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Plus, Pencil, Trash2, ExternalLink, Loader2 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
-import { useAuth } from "@/components/providers/auth-provider"
+import { useProfile } from "@/hooks/use-profile"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -28,7 +28,7 @@ const statusColors: Record<ProjectStatus, string> = {
 }
 
 export default function MyProjectsPage() {
-  const { user, isLoading: authLoading } = useAuth()
+  const { user, isLoading: authLoading } = useProfile()
   const router = useRouter()
 
   const [projects, setProjects] = React.useState<Project[]>([])

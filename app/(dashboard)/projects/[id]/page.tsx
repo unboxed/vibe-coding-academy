@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation"
 import Link from "next/link"
-import { createClient } from "@/lib/supabase/server"
+import { currentUser } from "@clerk/nextjs/server"
+import { createAdminClient } from "@/lib/supabase/server"
+import { getProfile } from "@/lib/clerk/sync-user"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -24,7 +26,7 @@ interface ProjectPageProps {
 }
 
 export default async function ProjectPage({ params }: ProjectPageProps) {
-  const supabase = await createClient()
+  const supabase = await createAdminClient()
 
   const { data: projectData } = await supabase
     .from("projects")
@@ -41,12 +43,12 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
     notFound()
   }
 
-  // Get current user to check ownership
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
+  // Get current user to check ownership and admin status
+  const user = await currentUser()
+  const profile = await getProfile()
   const isOwner = user?.id === project.user_id
+  const isAdmin = profile?.role === 'admin'
+  const canEdit = isOwner || isAdmin
 
   // Get other projects by same user
   const { data: otherProjectsData } = await supabase
@@ -135,7 +137,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                   </a>
                 </Button>
               )}
-              {isOwner && (
+              {canEdit && (
                 <Button variant="outline" asChild>
                   <Link href={`/projects/${project.id}/edit`}>
                     <Pencil className="mr-2 h-4 w-4" />
@@ -257,8 +259,8 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
             </Card>
           )}
 
-          {/* Owner actions */}
-          {isOwner && <ProjectActions projectId={project.id} />}
+          {/* Owner/Admin actions */}
+          {canEdit && <ProjectActions projectId={project.id} />}
         </div>
       </div>
     </div>

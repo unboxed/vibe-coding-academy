@@ -1,11 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { useAuth } from "@/components/providers/auth-provider"
+import { useRouter } from "next/navigation"
+import { useClerk } from "@clerk/nextjs"
+import { useProfile } from "@/hooks/use-profile"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { ThumbsUp, ThumbsDown } from "lucide-react"
-import { useRouter } from "next/navigation"
 
 interface DemoVoteButtonProps {
   demoId: string
@@ -13,7 +14,8 @@ interface DemoVoteButtonProps {
 }
 
 export function DemoVoteButton({ demoId, currentVotes }: DemoVoteButtonProps) {
-  const { user } = useAuth()
+  const { user } = useProfile()
+  const { openSignIn } = useClerk()
   const router = useRouter()
   const supabase = createClient()
   const [votes, setVotes] = useState(currentVotes)
@@ -22,7 +24,7 @@ export function DemoVoteButton({ demoId, currentVotes }: DemoVoteButtonProps) {
 
   const handleVote = async (value: number) => {
     if (!user) {
-      router.push("/login")
+      openSignIn()
       return
     }
 

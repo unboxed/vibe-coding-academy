@@ -1,4 +1,4 @@
-export type UserRole = "admin" | "facilitator" | "member"
+export type UserRole = "admin" | "member"
 
 export interface Profile {
   id: string
@@ -17,7 +17,7 @@ export interface Profile {
 
 export interface Week {
   id: string
-  number: number
+  number: number | null
   title: string
   level: number
   overview: string | null
@@ -29,6 +29,22 @@ export interface Week {
   published: boolean
   created_at: string
   updated_at: string
+}
+
+export interface WeekSection {
+  id: string
+  week_id: string
+  slug: string
+  title: string
+  content: string | null
+  sort_order: number
+  is_system: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface WeekWithSections extends Week {
+  sections: WeekSection[]
 }
 
 export type ProjectStatus = "draft" | "in_progress" | "completed"
@@ -53,6 +69,7 @@ export interface Project {
   github_url: string | null
   tech_stack: string[]
   status: ProjectStatus
+  sort_order: number
   created_at: string
   updated_at: string
   // Joined data
@@ -98,6 +115,7 @@ export interface BadgeAwardRow {
   id: string
   badge_id: string
   user_id: string
+  project_id: string | null
   demo_id: string | null
   awarded_by: string
   created_at: string
@@ -107,8 +125,28 @@ export interface BadgeAwardRow {
 export interface BadgeAward extends BadgeAwardRow {
   badge?: Badge
   profile?: Profile
+  project?: Project
   awarded_by_profile?: Profile
   demo?: Demo
+}
+
+// Project feedback from instructors
+export interface ProjectFeedback {
+  id: string
+  project_id: string
+  instructor_id: string
+  content: string
+  created_at: string
+  updated_at: string
+  // Joined data
+  instructor?: Profile
+}
+
+// Project with all related data for the projects table view
+export interface ProjectWithDetails extends Project {
+  profile: Profile
+  badges: BadgeAward[]
+  feedback: ProjectFeedback[]
 }
 
 // Extended types for views/queries
@@ -145,7 +183,7 @@ interface ProfileRow {
 
 interface WeekRow {
   id: string
-  number: number
+  number: number | null
   title: string
   level: number
   overview: string | null
@@ -155,6 +193,18 @@ interface WeekRow {
   resources: string | null
   feedback_url: string | null
   published: boolean
+  created_at: string
+  updated_at: string
+}
+
+interface WeekSectionRow {
+  id: string
+  week_id: string
+  slug: string
+  title: string
+  content: string | null
+  sort_order: number
+  is_system: boolean
   created_at: string
   updated_at: string
 }
@@ -172,6 +222,7 @@ interface ProjectRow {
   github_url: string | null
   tech_stack: string[]
   status: ProjectStatus
+  sort_order: number
   created_at: string
   updated_at: string
 }
@@ -204,6 +255,15 @@ interface BadgeRow {
   created_at: string
 }
 
+interface ProjectFeedbackRow {
+  id: string
+  project_id: string
+  instructor_id: string
+  content: string
+  created_at: string
+  updated_at: string
+}
+
 // Database response types
 export type Database = {
   public: {
@@ -218,6 +278,12 @@ export type Database = {
         Row: WeekRow
         Insert: Omit<WeekRow, "id" | "created_at" | "updated_at">
         Update: Partial<Omit<WeekRow, "id" | "created_at" | "updated_at">>
+        Relationships: []
+      }
+      week_sections: {
+        Row: WeekSectionRow
+        Insert: Omit<WeekSectionRow, "id" | "created_at" | "updated_at">
+        Update: Partial<Omit<WeekSectionRow, "id" | "week_id" | "created_at" | "updated_at">>
         Relationships: []
       }
       projects: {
@@ -248,6 +314,12 @@ export type Database = {
         Row: BadgeAwardRow
         Insert: Omit<BadgeAwardRow, "id" | "created_at">
         Update: Partial<Omit<BadgeAwardRow, "id" | "created_at">>
+        Relationships: []
+      }
+      project_feedback: {
+        Row: ProjectFeedbackRow
+        Insert: Omit<ProjectFeedbackRow, "id" | "created_at" | "updated_at">
+        Update: Partial<Omit<ProjectFeedbackRow, "id" | "project_id" | "created_at" | "updated_at">>
         Relationships: []
       }
     }
