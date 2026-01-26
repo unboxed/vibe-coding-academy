@@ -146,6 +146,22 @@ export function WeekContent({
     </div>
   )
 
+  // Preprocess markdown to preserve blank lines for display
+  const preprocessMarkdown = (content: string): string => {
+    if (!content) return ''
+    // Split by double newlines (paragraph boundaries)
+    // Replace sequences of 3+ newlines with visible blank line markers
+    // \n\n = normal paragraph break
+    // \n\n\n = one blank line between paragraphs
+    // \n\n\n\n = two blank lines, etc.
+    return content.replace(/\n{3,}/g, (match) => {
+      // Each extra newline beyond 2 becomes a blank line paragraph
+      const blankLines = match.length - 2
+      const markers = Array(blankLines).fill('\n\n&nbsp;\n').join('')
+      return '\n\n' + markers
+    })
+  }
+
   // Render markdown content for regular sections
   const renderMarkdownContent = (section: WeekSection) => (
     <div className="prose prose-slate max-w-none">
@@ -186,9 +202,16 @@ export function WeekContent({
                 }
                 return <code className={className}>{children}</code>
               },
+              p: ({ children }) => {
+                // Render blank line markers as empty space
+                if (children === '\u00A0' || children === ' ') {
+                  return <p className="h-4" aria-hidden="true">&nbsp;</p>
+                }
+                return <p>{children}</p>
+              },
             }}
           >
-            {section.content}
+            {preprocessMarkdown(section.content)}
           </ReactMarkdown>
         ) : (
           <ReactMarkdown
@@ -203,9 +226,16 @@ export function WeekContent({
                   {children}
                 </a>
               ),
+              p: ({ children }) => {
+                // Render blank line markers as empty space
+                if (children === '\u00A0' || children === ' ') {
+                  return <p className="h-4" aria-hidden="true">&nbsp;</p>
+                }
+                return <p>{children}</p>
+              },
             }}
           >
-            {section.content}
+            {preprocessMarkdown(section.content)}
           </ReactMarkdown>
         )
       ) : (
